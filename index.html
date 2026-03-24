@@ -516,7 +516,15 @@ function solvable(arrows){
 // ================================================================
 function arrowDir(a){const p=a.path,l=p[p.length-1],s=p[p.length-2];return[l[0]-s[0],l[1]-s[1]]}
 function canMove(idx,arrows=testArrows){const a=arrows[idx];const[dy,dx]=arrowDir(a);const h=a.path[a.path.length-1];let cr=Math.round(h[0])+dy,cc=Math.round(h[1])+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<arrows.length;i++){if(i===idx||arrows[i].isAnimating)continue;for(const pt of arrows[i].path)if(Math.round(pt[0])===cr&&Math.round(pt[1])===cc)return false}cr+=dy;cc+=dx}return true}
-function arrowAt(cx,cy){for(let i=testArrows.length-1;i>=0;i--){const a=testArrows[i];for(const p of a.path){const pos=g2c(p[0],p[1]);if(Math.sqrt((cx-pos.x)**2+(cy-pos.y)**2)<=DOT_RADIUS+Math.max(5,CELL_SIZE*.25))return i}for(let j=0;j<a.path.length-1;j++){const p1=g2c(a.path[j][0],a.path[j][1]),p2=g2c(a.path[j+1][0],a.path[j+1][1]);if(dSeg(cx,cy,p1.x,p1.y,p2.x,p2.y)<=LINE_WIDTH+3)return i}}return-1}
+function arrowAt(cx,cy){
+    // Generous touch targets: half a cell size minimum
+    const hitPt=Math.max(8,CELL_SIZE*.45);
+    const hitLine=Math.max(6,CELL_SIZE*.35);
+    for(let i=testArrows.length-1;i>=0;i--){const a=testArrows[i];
+        for(const p of a.path){const pos=g2c(p[0],p[1]);if(Math.sqrt((cx-pos.x)**2+(cy-pos.y)**2)<=hitPt)return i}
+        for(let j=0;j<a.path.length-1;j++){const p1=g2c(a.path[j][0],a.path[j][1]),p2=g2c(a.path[j+1][0],a.path[j+1][1]);if(dSeg(cx,cy,p1.x,p1.y,p2.x,p2.y)<=hitLine)return i}
+    }return-1;
+}
 function dSeg(px,py,x1,y1,x2,y2){const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1,dot=A*C+B*D,len=C*C+D*D;let t=len?dot/len:-1;let xx,yy;if(t<0){xx=x1;yy=y1}else if(t>1){xx=x2;yy=y2}else{xx=x1+t*C;yy=y1+t*D}return Math.sqrt((px-xx)**2+(py-yy)**2)}
 
 // ================================================================
@@ -599,13 +607,13 @@ function g2c(row,col){return{x:col*CELL_SIZE+CELL_SIZE/2,y:row*CELL_SIZE+CELL_SI
 function drawArrow(a){
     const path=a.path;if(path.length<2)return;
     const hinted=a.id===hintedArrowId;
-    if(hinted){const pulse=.3+Math.sin(Date.now()%1000/159)*.3;ctx.strokeStyle='#888';ctx.lineWidth=LINE_WIDTH+Math.max(4,CELL_SIZE*.3);ctx.globalAlpha=pulse;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}ctx.stroke()}
+    if(hinted){const pulse=.3+Math.sin(Date.now()%1000/159)*.3;ctx.strokeStyle='#888';ctx.lineWidth=LINE_WIDTH+Math.max(4,CELL_SIZE*.3);ctx.globalAlpha=pulse;ctx.lineCap='square';ctx.lineJoin='miter';ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}ctx.stroke()}
     const isHeld=a.id===heldArrowId;
     const isWrongArrow=wrongArrows.has(a.id);
-    const drawColor=isHeld&&!isWrongArrow?'#2563eb':a.color; // deep blue when held, but red arrows stay red
-    ctx.globalAlpha=a.isAnimating?.6:1;ctx.strokeStyle=drawColor;ctx.lineWidth=LINE_WIDTH;ctx.lineCap='round';ctx.lineJoin='round';
+    const drawColor=isHeld&&!isWrongArrow?'#2563eb':a.color;
+    ctx.globalAlpha=a.isAnimating?.6:1;ctx.strokeStyle=drawColor;ctx.lineWidth=LINE_WIDTH;ctx.lineCap='square';ctx.lineJoin='miter';
     ctx.beginPath();const sp=g2c(path[0][0],path[0][1]);ctx.moveTo(sp.x,sp.y);
-    for(let i=1;i<path.length;i++){const pos=g2c(path[i][0],path[i][1]);if(i>0&&i<path.length-1){const prev=g2c(path[i-1][0],path[i-1][1]),next=g2c(path[i+1][0],path[i+1][1]);const dx1=pos.x-prev.x,dy1=pos.y-prev.y,dx2=next.x-pos.x,dy2=next.y-pos.y;if(dx1!==dx2||dy1!==dy2){const cr=Math.max(3,CELL_SIZE*.3),l1=Math.sqrt(dx1*dx1+dy1*dy1),l2=Math.sqrt(dx2*dx2+dy2*dy2);ctx.lineTo(pos.x-(dx1/l1)*Math.min(cr,l1/2),pos.y-(dy1/l1)*Math.min(cr,l1/2));ctx.quadraticCurveTo(pos.x,pos.y,pos.x+(dx2/l2)*Math.min(cr,l2/2),pos.y+(dy2/l2)*Math.min(cr,l2/2))}else ctx.lineTo(pos.x,pos.y)}else ctx.lineTo(pos.x,pos.y)}
+    for(let i=1;i<path.length;i++){const pos=g2c(path[i][0],path[i][1]);ctx.lineTo(pos.x,pos.y)}
     ctx.stroke();
     // Arrowhead
     const last=path[path.length-1],prev=path[path.length-2];const dx=last[1]-prev[1],dy=last[0]-prev[0];const ep=g2c(last[0],last[1]);const ahl=Math.max(5,CELL_SIZE*.35),ahw=LINE_WIDTH*2.5;let tx=ep.x,ty=ep.y;if(dx>0)tx+=ahl;else if(dx<0)tx-=ahl;else if(dy>0)ty+=ahl;else ty-=ahl;
