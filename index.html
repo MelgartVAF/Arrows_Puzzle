@@ -414,7 +414,7 @@ const HARD_MIN_ARROWS=40; // never produce a puzzle with fewer than this
 let testArrows=[],nextArrowId=0;
 const activeAnimations=new Map(),bounceAnimations=new Map();
 let animationFrameId=null;
-const ANIM_DUR=3500,BOUNCE_DUR=700;
+const ANIM_DUR=2000,BOUNCE_DUR=700;
 let lives=3,maxLives=3,gameOver=false;
 let timeLimit=0,timeRemaining=0,timerInterval=null,gameStartTime=null,timerEnabled=false;
 let shapeMode='none',shapeGrid=null;
@@ -542,17 +542,17 @@ function startExitAnim(idx){
     a.isAnimating=true;
     const[dy,dx]=arrowDir(a);
     const orig=a.path.map(p=>[...p]);
-    const head=orig[orig.length-1];
-    // Distance from head to grid edge in the exit direction
-    let exitDist=0;
-    if(dx>0)exitDist=GRID_SIZE-head[1];
-    else if(dx<0)exitDist=head[1]+1;
-    else if(dy>0)exitDist=GRID_SIZE-head[0];
-    else exitDist=head[0]+1;
-    exitDist+=2; // a bit past the edge so it fully disappears
+    // Build full trail: original path + straight exit extension
+    const trail=[...orig];
+    let cr=orig[orig.length-1][0],cc=orig[orig.length-1][1];
+    // Extend past the grid edge so the whole arrow disappears
+    for(let i=0;i<orig.length+5;i++){cr+=dy;cc+=dx;trail.push([cr,cc])}
+    // The arrow is a window of origLen points sliding along the trail
+    // offset 0 = original position, offset = trail.length-origLen = fully exited
+    const maxOffset=trail.length-orig.length;
     activeAnimations.set(a.id,{
         id:a.id,start:Date.now(),dur:ANIM_DUR,
-        orig,dy,dx,exitDist,origLen:orig.length
+        trail,origLen:orig.length,maxOffset
     });
     if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
 }
@@ -585,40 +585,23 @@ function animLoop(){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
         if(ci===-1){done.push(id);continue}
-        // How far the head has moved from its start (in grid cells, smooth float)
-        const eased=p*p*(3-2*p); // smoothstep for natural feel
-        const headDist=eased*(s.exitDist+s.origLen);
-        // Build the visible path:
-        // - Head extends straight from original head position
-        // - Body stays on original winding path
-        // - Tail peels off as head moves further
+        // Slide a window of origLen points along the trail
+        // offset is a float — interpolate between trail points for smoothness
+        const eased=p*p; // ease in: accelerates out
+        const offset=eased*s.maxOffset;
         const np=[];
-        const headR=s.orig[s.origLen-1][0]+s.dy*Math.min(headDist,s.exitDist);
-        const headC=s.orig[s.origLen-1][1]+s.dx*Math.min(headDist,s.exitDist);
-        // How many original body points have been "consumed" (peeled off from tail)
-        const tailConsumed=Math.max(0,headDist-s.exitDist);
-        const firstVisible=Math.floor(tailConsumed);
-        // Add remaining original body points (from tail toward head)
-        for(let i=firstVisible;i<s.origLen;i++){
-            if(i===firstVisible&&tailConsumed>firstVisible){
-                // Partially consumed point — interpolate between this and next
-                const frac=tailConsumed-firstVisible;
-                if(i+1<s.origLen){
-                    const p1=s.orig[i],p2=s.orig[i+1];
-                    np.push([p1[0]+(p2[0]-p1[0])*frac,p1[1]+(p2[1]-p1[1])*frac]);
-                }
-            }else{
-                np.push([...s.orig[i]]);
+        for(let i=0;i<s.origLen;i++){
+            const ti=offset+i; // position on the trail
+            const bi=Math.floor(ti),fr=ti-bi;
+            if(bi>=0&&bi<s.trail.length-1){
+                const a1=s.trail[bi],a2=s.trail[bi+1];
+                const nr=a1[0]+(a2[0]-a1[0])*fr;
+                const nc=a1[1]+(a2[1]-a1[1])*fr;
+                if(nr>=-1&&nr<=GRID_SIZE&&nc>=-1&&nc<=GRID_SIZE)np.push([nr,nc]);
             }
         }
-        // Add the straight extension from original head to current head position
-        if(headDist>0&&headDist<=s.exitDist){
-            np.push([headR,headC]);
-        }
-        // Filter to on-screen points
-        const visible=np.filter(([r,c])=>r>=-1&&r<=GRID_SIZE&&c>=-1&&c<=GRID_SIZE);
-        testArrows[ci].path=visible.length?visible:np;
-        if(p>=1||!visible.length)done.push(id);
+        testArrows[ci].path=np;
+        if(p>=1||!np.length)done.push(id);
     }
     for(const[id,s]of bounceAnimations){
         const p=Math.min((now-s.start)/s.dur,1);
