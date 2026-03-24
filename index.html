@@ -544,9 +544,12 @@ function startExitAnim(idx){
     const orig=a.path.map(p=>[...p]);
     const trail=[...orig];
     let cr=orig[orig.length-1][0],cc=orig[orig.length-1][1];
-    for(let i=0;i<orig.length+5;i++){cr+=dy;cc+=dx;trail.push([cr,cc])}
+    // Extend well past the edge so entire arrow disappears
+    for(let i=0;i<orig.length+GRID_SIZE;i++){cr+=dy;cc+=dx;trail.push([cr,cc])}
     const maxOff=trail.length-orig.length;
-    activeAnimations.set(a.id,{id:a.id,start:Date.now(),dur:ANIM_DUR,trail,origLen:orig.length,maxOff});
+    // Constant speed: 30 cells per second, so duration scales with distance
+    const dur=Math.max(400,maxOff/30*1000);
+    activeAnimations.set(a.id,{id:a.id,start:Date.now(),dur,trail,origLen:orig.length,maxOff,dy,dx});
     if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
 }
 // Bounce: snake forward toward blocker, hit it (flash red), snake back
@@ -578,14 +581,28 @@ function animLoop(){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
         if(ci===-1){done.push(id);continue}
-        const eased=1-Math.pow(1-p,3); // ease out
-        const off=Math.round(eased*s.maxOff);
+        // Smooth fractional offset
+        const off=p*s.maxOff;
         const np=[];
         for(let i=0;i<s.origLen;i++){
             const ti=off+i;
-            if(ti>=0&&ti<s.trail.length){
-                const pt=s.trail[ti];
+            const bi=Math.floor(ti),fr=ti-bi;
+            if(bi<0||bi>=s.trail.length)continue;
+            if(fr<0.001||bi>=s.trail.length-1){
+                // Exact grid point — no interpolation needed
+                const pt=s.trail[bi];
                 if(pt[0]>=-1&&pt[0]<=GRID_SIZE&&pt[1]>=-1&&pt[1]<=GRID_SIZE)np.push(pt);
+            }else{
+                const a1=s.trail[bi],a2=s.trail[bi+1];
+                // Only interpolate if both points are on the same axis (no diagonal)
+                if(a1[0]===a2[0]||a1[1]===a2[1]){
+                    const nr=a1[0]+(a2[0]-a1[0])*fr,nc=a1[1]+(a2[1]-a1[1])*fr;
+                    if(nr>=-1&&nr<=GRID_SIZE&&nc>=-1&&nc<=GRID_SIZE)np.push([nr,nc]);
+                }else{
+                    // Corner: snap to the nearer grid point (no diagonal)
+                    const pt=fr<0.5?a1:a2;
+                    if(pt[0]>=-1&&pt[0]<=GRID_SIZE&&pt[1]>=-1&&pt[1]<=GRID_SIZE)np.push(pt);
+                }
             }
         }
         testArrows[ci].path=np;
