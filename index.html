@@ -43,23 +43,21 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ---- GAME ---- */
 .game-screen{padding-bottom:0;height:100vh;height:100dvh;overflow:hidden}
-.game-stats{width:100%;display:flex;justify-content:center;align-items:center;gap:24px;padding:6px 16px;flex-shrink:0}
-.lives{font-size:24px;display:flex;gap:4px;letter-spacing:2px}
+.game-bar{width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.game-bar .bar-btn{width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text);font-family:inherit;flex-shrink:0}
+.game-bar .bar-btn:active{background:#f0f0f0}
+.bar-title{font-size:14px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-right{display:flex;gap:4px;flex-shrink:0}
+.lives{font-size:20px;display:flex;gap:2px;flex-shrink:0}
 .lives .heart{transition:opacity .2s}
 .lives .heart.lost{opacity:.2}
-.arrow-count{font-size:14px;font-weight:600;color:var(--dim)}
-.timer{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dim)}
+.arrow-count{font-size:12px;font-weight:600;color:var(--dim);flex-shrink:0}
 
-.canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0;padding:4px}
+.canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
 #gameCanvas.grabbing{cursor:grabbing}
-.zoom-btns{position:absolute;bottom:12px;right:12px;display:flex;gap:4px;z-index:10}
-.zoom-btns button{width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;background:rgba(255,255,255,.9);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-
-.game-controls{width:100%;padding:8px 16px 12px;display:flex;gap:8px;justify-content:center;flex-shrink:0}
-.game-controls button{padding:10px 20px;border:1.5px solid var(--border);border-radius:var(--radius);background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);transition:border-color .15s,background .15s;font-family:inherit}
-.game-controls button:hover{border-color:var(--accent);background:#f5f5f5}
-.game-controls button:active{transform:scale(.97)}
+.zoom-btns{position:absolute;bottom:8px;right:8px;display:flex;gap:4px;z-index:10}
+.zoom-btns button{width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;background:rgba(255,255,255,.9);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 
 /* ---- CALENDAR ---- */
 .cal-screen{padding-bottom:40px}
@@ -164,15 +162,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- ==================== GAME ==================== -->
 <div class="screen game-screen" id="gameScreen">
-    <div class="topbar">
-        <button class="back" onclick="exitGame()">←</button>
-        <div class="title" id="gameTitle">Daily</div>
-        <div class="info" id="gameInfo"></div>
-    </div>
-    <div class="game-stats">
+    <div class="game-bar">
+        <button class="bar-btn" onclick="exitGame()">←</button>
         <div class="lives" id="livesDisplay"></div>
+        <div class="bar-title" id="gameTitle">Daily</div>
         <div class="arrow-count" id="arrowCount"></div>
-        <div class="timer" id="timerDisplay"></div>
+        <div class="bar-right">
+            <button class="bar-btn" onclick="showHint()" title="Hint">?</button>
+            <button class="bar-btn" onclick="restartCurrent()" title="Restart">↺</button>
+        </div>
     </div>
     <div class="canvas-wrap">
         <canvas id="gameCanvas"></canvas>
@@ -182,11 +180,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
             <button onclick="zoomOut()">−</button>
             <button onclick="zoomReset()">⟲</button>
         </div>
-    </div>
-    <div class="game-controls">
-        <button onclick="showHint()">Hint</button>
-        <button onclick="restartCurrent()">Restart</button>
-        <button onclick="toggleModal('howModal')">How to play</button>
     </div>
 </div>
 
@@ -259,7 +252,7 @@ const MIN_ZOOM=1,MAX_ZOOM=5;
 
 function resizeCanvas(){
     // Calculate available space: viewport minus topbar (~50px), stats (~40px), controls (~50px)
-    const chrome=140; // reserved for UI elements above and below canvas
+    const chrome=60; // just the top bar
     const availW=window.innerWidth-16;
     const availH=window.innerHeight-chrome;
     const displayW=Math.max(200,Math.min(availW,availH));
@@ -355,12 +348,16 @@ canvas.addEventListener('click',e=>{
 
 // Touch pinch+pan+hold
 let touches=[],lastPinchDist=0,lastTouchCenter=null,touchDragMoved=false;
+let touchStartX=0,touchStartY=0; // track start position to detect drag vs tap
+const TOUCH_DRAG_THRESHOLD=8; // pixels of movement before it counts as a drag
+
 canvas.addEventListener('touchstart',e=>{
     e.preventDefault();touches=[...e.touches];touchDragMoved=false;
     if(touches.length===2){lastPinchDist=tDist(touches);lastTouchCenter=tCenter(touches);cancelHold()}
     else if(touches.length===1){
+        touchStartX=touches[0].clientX;touchStartY=touches[0].clientY;
         startHold(touches[0].clientX,touches[0].clientY);
-        if(viewScale>1){lastTouchCenter={x:touches[0].clientX,y:touches[0].clientY};dragViewX=viewX;dragViewY=viewY}
+        lastTouchCenter={x:touches[0].clientX,y:touches[0].clientY};dragViewX=viewX;dragViewY=viewY;
     }
 },{passive:false});
 canvas.addEventListener('touchmove',e=>{
@@ -371,11 +368,21 @@ canvas.addEventListener('touchmove',e=>{
         if(lastPinchDist>0){const r=canvas.getBoundingClientRect();zoomAt((nc.x-r.left)*(canvas.width/r.width),(nc.y-r.top)*(canvas.height/r.height),nd/lastPinchDist)}
         if(lastTouchCenter){const r=canvas.getBoundingClientRect();viewX+=(nc.x-lastTouchCenter.x)*(canvas.width/r.width);viewY+=(nc.y-lastTouchCenter.y)*(canvas.height/r.height);clampPan();render()}
         lastPinchDist=nd;lastTouchCenter=nc;touchDragMoved=true;
-    }else if(nt.length===1&&viewScale>1&&lastTouchCenter){
-        const r=canvas.getBoundingClientRect();
-        const dx=(nt[0].clientX-lastTouchCenter.x)*(canvas.width/r.width),dy=(nt[0].clientY-lastTouchCenter.y)*(canvas.height/r.height);
-        if(Math.abs(dx)>3||Math.abs(dy)>3){touchDragMoved=true;cancelHold()}
-        viewX=dragViewX+dx;viewY=dragViewY+dy;clampPan();render();
+    }else if(nt.length===1){
+        // Always check if finger moved enough to count as drag
+        const movedX=Math.abs(nt[0].clientX-touchStartX);
+        const movedY=Math.abs(nt[0].clientY-touchStartY);
+        if(movedX>TOUCH_DRAG_THRESHOLD||movedY>TOUCH_DRAG_THRESHOLD){
+            touchDragMoved=true;cancelHold();
+        }
+        // Pan when zoomed in
+        if(viewScale>1&&lastTouchCenter){
+            const r=canvas.getBoundingClientRect();
+            const dx=(nt[0].clientX-lastTouchCenter.x)*(canvas.width/r.width),dy=(nt[0].clientY-lastTouchCenter.y)*(canvas.height/r.height);
+            viewX=dragViewX+(nt[0].clientX-touchStartX)*(canvas.width/r.width);
+            viewY=dragViewY+(nt[0].clientY-touchStartY)*(canvas.height/r.height);
+            clampPan();render();
+        }
     }
 },{passive:false});
 canvas.addEventListener('touchend',e=>{
@@ -837,7 +844,6 @@ function startDaily(dateStr){
     rng=mulberry32(dateToSeed(dateStr+'_puzzle_v4'));
     shapeGrid=genShape(dc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Daily · '+fmtDateShort(dateStr);
-    document.getElementById('gameInfo').textContent='';
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
@@ -869,7 +875,6 @@ function startLevel(n){
     rng=mulberry32(dateToSeed('level_'+n+'_puzzle_v4'));
     shapeGrid=genShape(lc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Level '+n;
-    document.getElementById('gameInfo').textContent=lc.gridSize+'×'+lc.gridSize;
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
@@ -882,7 +887,6 @@ function startFreePlay(){
     const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
     shapeGrid=genShape(shape,GRID_SIZE);
     document.getElementById('gameTitle').textContent='Free Play';
-    document.getElementById('gameInfo').textContent='';
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
