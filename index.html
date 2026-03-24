@@ -252,9 +252,9 @@ const MIN_ZOOM=1,MAX_ZOOM=5;
 
 function resizeCanvas(){
     // Calculate available space: viewport minus topbar (~50px), stats (~40px), controls (~50px)
-    const chrome=60; // just the top bar
-    const availW=window.innerWidth-16;
-    const availH=window.innerHeight-chrome;
+    const chrome=52; // just the top bar
+    const availW=window.innerWidth-8;
+    const availH=window.innerHeight-chrome-8; // small bottom margin
     const displayW=Math.max(200,Math.min(availW,availH));
     // Higher internal resolution for crisp rendering on dense grids
     const dpr=window.devicePixelRatio||1;
@@ -537,7 +537,26 @@ function dSeg(px,py,x1,y1,x2,y2){const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1,dot=A*C+B
 // ================================================================
 //  ANIMATION
 // ================================================================
-function startExitAnim(idx){const a=testArrows[idx];if(a.isAnimating)return;a.isAnimating=true;const[dy,dx]=arrowDir(a);const orig=a.path.map(p=>[...p]);const ext=[...orig];let cr=orig[orig.length-1][0],cc=orig[orig.length-1][1];while(ext.length<orig.length+30){cr+=dy;cc+=dx;ext.push([cr,cc])}activeAnimations.set(a.id,{id:a.id,start:Date.now(),dur:ANIM_DUR,ext,origLen:orig.length});if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop)}
+function startExitAnim(idx){
+    const a=testArrows[idx];if(a.isAnimating)return;
+    a.isAnimating=true;
+    const[dy,dx]=arrowDir(a);
+    const orig=a.path.map(p=>[...p]);
+    // Build full trail: original winding path + straight exit to off-screen
+    // The head will travel along this trail, tail follows behind
+    const trail=[...orig];
+    let cr=orig[orig.length-1][0],cc=orig[orig.length-1][1];
+    // Extend straight until well past grid edge
+    const exitLen=GRID_SIZE+5;
+    for(let i=0;i<exitLen;i++){cr+=dy;cc+=dx;trail.push([cr,cc])}
+    // Total distance the head needs to travel = exitLen steps
+    // When head reaches end of trail, the whole arrow is off screen
+    activeAnimations.set(a.id,{
+        id:a.id,start:Date.now(),dur:ANIM_DUR,
+        trail,origLen:orig.length,totalSteps:exitLen+orig.length
+    });
+    if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
+}
 // Bounce: snake forward toward blocker, hit it (flash red), snake back
 function startBounce(idx,br,bc){
     const a=testArrows[idx];if(a.isAnimating)return;
@@ -563,7 +582,29 @@ function startBounce(idx,br,bc){
 function animLoop(){
     if(!activeAnimations.size&&!bounceAnimations.size){animationFrameId=null;return}
     const now=Date.now();const done=[],bdone=[];
-    for(const[id,s]of activeAnimations){const p=Math.min((now-s.start)/s.dur,1);const ci=testArrows.findIndex(a=>a.id===id);if(ci===-1){done.push(id);continue}const e=1-Math.pow(1-p,3),off=e*(s.ext.length-s.origLen+s.origLen);const np=[];for(let i=0;i<s.origLen;i++){const ni=i+off,bi=Math.floor(ni),fr=ni-bi;if(bi<s.ext.length-1){const p1=s.ext[bi],p2=s.ext[bi+1];const nr=p1[0]+(p2[0]-p1[0])*fr,nc=p1[1]+(p2[1]-p1[1])*fr;if(nr>=-1&&nr<=GRID_SIZE&&nc>=-1&&nc<=GRID_SIZE)np.push([nr,nc])}}testArrows[ci].path=np;if(p>=1||!np.length)done.push(id)}
+    for(const[id,s]of activeAnimations){
+        const p=Math.min((now-s.start)/s.dur,1);
+        const ci=testArrows.findIndex(a=>a.id===id);
+        if(ci===-1){done.push(id);continue}
+        // Head position advances along the trail
+        // Ease: start slow, speed up (feels like acceleration)
+        const eased=p*p; // quadratic ease-in
+        const headPos=(s.origLen-1)+eased*(s.trail.length-s.origLen+s.origLen);
+        // Each body point follows the trail at its own offset behind the head
+        const np=[];
+        for(let i=0;i<s.origLen;i++){
+            // Point i is (origLen-1-i) steps behind the head on the trail
+            const trailPos=headPos-(s.origLen-1-i);
+            if(trailPos<0)continue; // hasn't started moving yet
+            const bi=Math.floor(trailPos),fr=trailPos-bi;
+            if(bi>=s.trail.length-1)continue; // past the end
+            const p1=s.trail[bi],p2=s.trail[bi+1];
+            const nr=p1[0]+(p2[0]-p1[0])*fr,nc=p1[1]+(p2[1]-p1[1])*fr;
+            if(nr>=-2&&nr<=GRID_SIZE+1&&nc>=-2&&nc<=GRID_SIZE+1)np.push([nr,nc]);
+        }
+        testArrows[ci].path=np;
+        if(p>=1||!np.length)done.push(id);
+    }
     for(const[id,s]of bounceAnimations){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
