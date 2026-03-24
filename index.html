@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Arrows</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Arrows">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='white' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='55'>→</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fff;--text:#111;--dim:#999;--border:#e5e5e5;--accent:#111;--green:#22c55e;--red:#ef4444;--radius:12px}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+/* ---- SCREENS ---- */
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex}
+
+/* ---- HOME ---- */
+.home{justify-content:center;gap:32px;padding:40px 24px}
+.home-title{font-size:48px;font-weight:800;letter-spacing:-2px}
+.home-sub{color:var(--dim);font-size:15px;margin-top:-20px}
+.home-cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
+.home-card{display:flex;align-items:center;gap:16px;padding:20px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:border-color .15s,transform .1s;background:var(--bg)}
+.home-card:hover{border-color:var(--accent)}
+.home-card:active{transform:scale(.98)}
+.home-card .icon{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border-radius:10px}
+.home-card .label{font-size:17px;font-weight:600}
+.home-card .desc{font-size:13px;color:var(--dim);margin-top:2px}
+.home-streak{font-size:14px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.home-streak b{color:var(--text)}
+
+/* ---- TOP BAR ---- */
+.topbar{width:100%;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar .back{width:36px;height:36px;border:2px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:border-color .15s}
+.topbar .back:hover{border-color:var(--accent)}
+.topbar .title{font-size:16px;font-weight:700;flex:1}
+.topbar .info{font-size:13px;color:var(--dim)}
+
+/* ---- GAME ---- */
+.game-screen{padding-bottom:0;height:100vh;height:100dvh;overflow:hidden}
+.game-stats{width:100%;display:flex;justify-content:center;align-items:center;gap:24px;padding:6px 16px;flex-shrink:0}
+.lives{font-size:24px;display:flex;gap:4px;letter-spacing:2px}
+.lives .heart{transition:opacity .2s}
+.lives .heart.lost{opacity:.2}
+.arrow-count{font-size:14px;font-weight:600;color:var(--dim)}
+.timer{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dim)}
+
+.canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0;padding:4px}
+#gameCanvas{display:block;cursor:grab;touch-action:none}
+#gameCanvas.grabbing{cursor:grabbing}
+.zoom-btns{position:absolute;bottom:12px;right:12px;display:flex;gap:4px;z-index:10}
+.zoom-btns button{width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;background:rgba(255,255,255,.9);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+
+.game-controls{width:100%;padding:8px 16px 12px;display:flex;gap:8px;justify-content:center;flex-shrink:0}
+.game-controls button{padding:10px 20px;border:1.5px solid var(--border);border-radius:var(--radius);background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);transition:border-color .15s,background .15s;font-family:inherit}
+.game-controls button:hover{border-color:var(--accent);background:#f5f5f5}
+.game-controls button:active{transform:scale(.97)}
+
+/* ---- CALENDAR ---- */
+.cal-screen{padding-bottom:40px}
+.cal-month{width:100%;max-width:380px;padding:0 16px}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-nav button{width:36px;height:36px;border:1.5px solid var(--border);border-radius:10px;background:none;font-size:18px;cursor:pointer;color:var(--text)}
+.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal-nav span{font-size:15px;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-grid .dh{font-size:11px;color:var(--dim);font-weight:600;padding:4px 0}
+.cal-grid .d{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:14px;cursor:pointer;position:relative;transition:background .1s;border:1.5px solid transparent}
+.cal-grid .d:hover{background:#f5f5f5}
+.cal-grid .d.empty{cursor:default;background:none}
+.cal-grid .d.future{opacity:.2;cursor:default}
+.cal-grid .d.today{border-color:var(--accent)}
+.cal-grid .d.done{background:#f0fdf4}
+.cal-grid .d.done::after{content:'✓';position:absolute;bottom:1px;right:3px;font-size:8px;color:var(--green);font-weight:700}
+.cal-grid .d .tm{font-size:7px;color:var(--dim);margin-top:-1px}
+
+/* ---- LEVELS ---- */
+.lvl-screen{padding-bottom:40px}
+.lvl-grid{width:100%;max-width:420px;padding:0 16px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lvl-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);font-size:16px;font-weight:700;cursor:pointer;border:2px solid var(--border);transition:border-color .15s,transform .1s;position:relative}
+.lvl-cell:hover{border-color:var(--accent)}
+.lvl-cell:active{transform:scale(.95)}
+.lvl-cell.done{background:#f0fdf4;border-color:var(--green)}
+.lvl-cell.done::after{content:'✓';position:absolute;top:2px;right:4px;font-size:9px;color:var(--green);font-weight:700}
+.lvl-cell.current{border-color:var(--accent);background:#f5f5f5}
+.lvl-cell.locked{opacity:.25;cursor:default;pointer-events:none}
+.lvl-pages{display:flex;gap:8px;align-items:center;margin:16px 0}
+.lvl-pages button{padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);font-family:inherit}
+.lvl-pages button:disabled{opacity:.3;cursor:default}
+.lvl-pages span{font-size:13px;color:var(--dim)}
+
+/* ---- MODALS ---- */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s}
+.modal-bg.active{display:flex}
+.modal{background:var(--bg);border-radius:16px;padding:28px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;position:relative;border:1.5px solid var(--border);animation:slideUp .2s}
+.modal h2{font-size:20px;margin-bottom:12px}
+.modal p,.modal li{color:#555;line-height:1.6;margin-bottom:6px;font-size:14px}
+.modal strong{color:var(--text)}
+.modal ol,.modal ul{margin-left:20px}
+.modal .close{position:absolute;top:10px;right:14px;font-size:24px;color:var(--dim);cursor:pointer;background:none;border:none}
+
+/* Share */
+.share-box{background:#f5f5f5;padding:16px;border-radius:var(--radius);margin:12px 0;font-size:15px}
+.share-box p{margin:4px 0;color:var(--text)}
+.share-btn{width:100%;padding:12px;border:2px solid var(--border);border-radius:var(--radius);background:none;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit}
+.share-btn:hover{border-color:var(--accent);background:#f5f5f5}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(max-width:380px){.home-title{font-size:36px}.lvl-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- ==================== HOME ==================== -->
+<div class="screen home active" id="homeScreen">
+    <div class="home-title">Arrows</div>
+    <div class="home-sub">Remove every arrow. Think before you click.</div>
+    <div class="home-cards">
+        <div class="home-card" onclick="showCalendar()">
+            <div class="icon">📅</div>
+            <div><div class="label">Daily Challenge</div><div class="desc">A new puzzle every day</div></div>
+        </div>
+        <div class="home-card" onclick="showLevels()">
+            <div class="icon">🏔️</div>
+            <div><div class="label">Levels</div><div class="desc" id="lvlProgress">0 / 200 completed</div></div>
+        </div>
+        <div class="home-card" onclick="startFreePlay()">
+            <div class="icon">🔀</div>
+            <div><div class="label">Free Play</div><div class="desc">Random puzzle, no pressure</div></div>
+        </div>
+    </div>
+    <div class="home-streak" id="homeStreak"></div>
+</div>
+
+<!-- ==================== CALENDAR ==================== -->
+<div class="screen cal-screen" id="calScreen">
+    <div class="topbar">
+        <button class="back" onclick="goHome()">←</button>
+        <div class="title">Daily Challenge</div>
+    </div>
+    <div class="cal-month" id="calMonth"></div>
+</div>
+
+<!-- ==================== LEVELS ==================== -->
+<div class="screen lvl-screen" id="lvlScreen">
+    <div class="topbar">
+        <button class="back" onclick="goHome()">←</button>
+        <div class="title">Levels</div>
+        <div class="info" id="lvlInfo"></div>
+    </div>
+    <div class="lvl-pages">
+        <button onclick="lvlPagePrev()" id="lvlPrevBtn">←</button>
+        <span id="lvlPageLabel">1-25</span>
+        <button onclick="lvlPageNext()" id="lvlNextBtn">→</button>
+    </div>
+    <div class="lvl-grid" id="lvlGrid"></div>
+</div>
+
+<!-- ==================== GAME ==================== -->
+<div class="screen game-screen" id="gameScreen">
+    <div class="topbar">
+        <button class="back" onclick="exitGame()">←</button>
+        <div class="title" id="gameTitle">Daily</div>
+        <div class="info" id="gameInfo"></div>
+    </div>
+    <div class="game-stats">
+        <div class="lives" id="livesDisplay"></div>
+        <div class="arrow-count" id="arrowCount"></div>
+        <div class="timer" id="timerDisplay"></div>
+    </div>
+    <div class="canvas-wrap">
+        <canvas id="gameCanvas"></canvas>
+        <div class="zoom-btns">
+            <button onclick="togglePaths()" id="pathToggleBtn" title="Show all paths" style="font-size:14px;font-weight:700">#</button>
+            <button onclick="zoomIn()">+</button>
+            <button onclick="zoomOut()">−</button>
+            <button onclick="zoomReset()">⟲</button>
+        </div>
+    </div>
+    <div class="game-controls">
+        <button onclick="showHint()">Hint</button>
+        <button onclick="restartCurrent()">Restart</button>
+        <button onclick="toggleModal('howModal')">How to play</button>
+    </div>
+</div>
+
+<!-- ==================== HOW TO PLAY ==================== -->
+<div class="modal-bg" id="howModal" onclick="if(event.target===this)toggleModal('howModal')">
+<div class="modal">
+    <button class="close" onclick="toggleModal('howModal')">✕</button>
+    <h2>How to play</h2>
+    <ol>
+        <li><strong>Tap an arrow</strong> to send it flying in the direction it points.</li>
+        <li>It can only leave if <strong>nothing blocks</strong> its path to the edge.</li>
+        <li>Tapping a blocked arrow <strong>costs a life</strong>.</li>
+        <li>Clear all arrows to win. Every puzzle is solvable.</li>
+    </ol>
+    <p style="margin-top:12px"><strong>Tip:</strong> use Hint if you're stuck. Pinch or scroll to zoom on big puzzles.</p>
+</div>
+</div>
+
+<!-- ==================== WIN MODAL ==================== -->
+<div class="modal-bg" id="winModal" onclick="if(event.target===this)toggleModal('winModal')">
+<div class="modal" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:8px">🎉</div>
+    <h2 id="winTitle" style="margin-bottom:4px">Solved!</h2>
+    <p id="winSub" style="color:var(--dim);margin-bottom:16px"></p>
+    <div class="share-box" id="winStats"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+        <button class="share-btn" onclick="nativeShare()" id="nativeShareBtn" style="background:var(--accent);color:#fff;border-color:var(--accent)">Share</button>
+        <button class="share-btn" onclick="copyResults()">Copy results</button>
+        <button class="share-btn" onclick="winNext()" id="winNextBtn">Next puzzle</button>
+        <button class="share-btn" onclick="toggleModal('winModal');goHome()" style="color:var(--dim)">Home</button>
+    </div>
+</div>
+</div>
+
+<!-- ==================== LOSE MODAL ==================== -->
+<div class="modal-bg" id="loseModal" onclick="if(event.target===this)toggleModal('loseModal')">
+<div class="modal" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:8px">💔</div>
+    <h2 style="margin-bottom:4px">Out of lives</h2>
+    <p id="loseSub" style="color:var(--dim);margin-bottom:20px"></p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="share-btn" onclick="toggleModal('loseModal');restartCurrent()" style="background:var(--accent);color:#fff;border-color:var(--accent)">Try again</button>
+        <button class="share-btn" onclick="toggleModal('loseModal');goHome()" style="color:var(--dim)">Home</button>
+    </div>
+</div>
+</div>
+
+<script>
+// ================================================================
+//  SEEDED RNG
+// ================================================================
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function dateToSeed(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h}
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+let rng=Math.random;
+
+// ================================================================
+//  SCREENS
+// ================================================================
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function goHome(){showScreen('homeScreen');updateHomeStats()}
+function toggleModal(id){document.getElementById(id).classList.toggle('active')}
+
+// ================================================================
+//  CANVAS + VIEWPORT
+// ================================================================
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+let viewScale=1,viewX=0,viewY=0;
+const MIN_ZOOM=1,MAX_ZOOM=5;
+
+function resizeCanvas(){
+    // Calculate available space: viewport minus topbar (~50px), stats (~40px), controls (~50px)
+    const chrome=140; // reserved for UI elements above and below canvas
+    const availW=window.innerWidth-16;
+    const availH=window.innerHeight-chrome;
+    const displayW=Math.max(200,Math.min(availW,availH));
+    // Higher internal resolution for crisp rendering on dense grids
+    const dpr=window.devicePixelRatio||1;
+    const res=Math.min(dpr,GRID_SIZE>24?2:1.5);
+    canvas.width=Math.round(displayW*res);
+    canvas.height=canvas.width;
+    canvas.style.width=displayW+'px';
+    canvas.style.height=displayW+'px';
+    CELL_SIZE=canvas.width/GRID_SIZE;updateDrawSizes();
+    if(testArrows&&testArrows.length>0)render();
+}
+window.addEventListener('resize',()=>{if(document.getElementById('gameScreen').classList.contains('active'))resizeCanvas()});
+
+function zoomIn(){zoomAt(canvas.width/2,canvas.height/2,1.3)}
+function zoomOut(){zoomAt(canvas.width/2,canvas.height/2,1/1.3)}
+function zoomReset(){viewScale=1;viewX=0;viewY=0;render()}
+function zoomAt(cx,cy,f){const ns=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,viewScale*f));const rf=ns/viewScale;viewX=cx-rf*(cx-viewX);viewY=cy-rf*(cy-viewY);viewScale=ns;clampPan();render()}
+function clampPan(){const w=canvas.width,h=canvas.height;viewX=Math.min(0,Math.max(w-w*viewScale,viewX));viewY=Math.min(0,Math.max(h-h*viewScale,viewY))}
+function screenToCanvas(cx,cy){const r=canvas.getBoundingClientRect();const rx=canvas.width/r.width,ry=canvas.height/r.height;return{x:((cx-r.left)*rx-viewX)/viewScale,y:((cy-r.top)*ry-viewY)/viewScale}}
+
+// Wheel zoom
+canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt((e.clientX-r.left)*(canvas.width/r.width),(e.clientY-r.top)*(canvas.height/r.height),e.deltaY<0?1.15:1/1.15)},{passive:false});
+
+// Hold detection: hold shows path preview, release on arrow fires it
+const HOLD_MS=180;
+function startHold(cx,cy){
+    cancelHold();
+    holdFired=false;
+    holdTimer=setTimeout(()=>{
+        const{x,y}=screenToCanvas(cx,cy);
+        const idx=arrowAt(x,y);
+        if(idx!==-1&&!testArrows[idx].isAnimating){
+            heldArrowId=testArrows[idx].id;
+            holdFired=true;
+            render();
+        }
+    },HOLD_MS);
+}
+function cancelHold(){
+    if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
+    if(heldArrowId!==null){heldArrowId=null;render()}
+}
+// On release: if still on the same arrow, fire it. Otherwise just cancel.
+function releaseHold(cx,cy){
+    if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
+    if(!holdFired||heldArrowId===null){heldArrowId=null;return}
+    const savedId=heldArrowId;
+    heldArrowId=null;holdFired=false;
+    // Check if pointer is still over the SAME arrow that was held
+    const{x,y}=screenToCanvas(cx,cy);
+    const idx=arrowAt(x,y);
+    if(idx!==-1&&testArrows[idx].id===savedId){
+        // Fire this specific arrow by index — don't re-detect from coords
+        fireArrow(idx);
+    }else{
+        render(); // released off the arrow, just cancel
+    }
+}
+
+// Mouse drag + hold
+let isDragging=false,dragStartX=0,dragStartY=0,dragViewX=0,dragViewY=0,dragMoved=false;
+canvas.addEventListener('mousedown',e=>{
+    dragMoved=false;
+    startHold(e.clientX,e.clientY);
+    if(viewScale>1){isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;dragViewX=viewX;dragViewY=viewY;canvas.classList.add('grabbing')}
+});
+window.addEventListener('mousemove',e=>{
+    if(!isDragging&&!holdFired)return;
+    if(isDragging){
+        const r=canvas.getBoundingClientRect();
+        const dx=(e.clientX-dragStartX)*(canvas.width/r.width),dy=(e.clientY-dragStartY)*(canvas.height/r.height);
+        if(Math.abs(dx)>3||Math.abs(dy)>3){dragMoved=true;cancelHold()}
+        viewX=dragViewX+dx;viewY=dragViewY+dy;clampPan();render();
+    }
+});
+let suppressNextClick=false;
+window.addEventListener('mouseup',e=>{
+    isDragging=false;canvas.classList.remove('grabbing');
+    if(holdFired){
+        suppressNextClick=true; // block the click that follows this mouseup
+        releaseHold(e.clientX,e.clientY);
+        return;
+    }
+    cancelHold();
+});
+canvas.addEventListener('click',e=>{
+    if(dragMoved){dragMoved=false;return}
+    if(suppressNextClick){suppressNextClick=false;return}
+    handleTap(e.clientX,e.clientY);
+});
+
+// Touch pinch+pan+hold
+let touches=[],lastPinchDist=0,lastTouchCenter=null,touchDragMoved=false;
+canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();touches=[...e.touches];touchDragMoved=false;
+    if(touches.length===2){lastPinchDist=tDist(touches);lastTouchCenter=tCenter(touches);cancelHold()}
+    else if(touches.length===1){
+        startHold(touches[0].clientX,touches[0].clientY);
+        if(viewScale>1){lastTouchCenter={x:touches[0].clientX,y:touches[0].clientY};dragViewX=viewX;dragViewY=viewY}
+    }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();const nt=[...e.touches];
+    if(nt.length===2){
+        cancelHold();
+        const nd=tDist(nt),nc=tCenter(nt);
+        if(lastPinchDist>0){const r=canvas.getBoundingClientRect();zoomAt((nc.x-r.left)*(canvas.width/r.width),(nc.y-r.top)*(canvas.height/r.height),nd/lastPinchDist)}
+        if(lastTouchCenter){const r=canvas.getBoundingClientRect();viewX+=(nc.x-lastTouchCenter.x)*(canvas.width/r.width);viewY+=(nc.y-lastTouchCenter.y)*(canvas.height/r.height);clampPan();render()}
+        lastPinchDist=nd;lastTouchCenter=nc;touchDragMoved=true;
+    }else if(nt.length===1&&viewScale>1&&lastTouchCenter){
+        const r=canvas.getBoundingClientRect();
+        const dx=(nt[0].clientX-lastTouchCenter.x)*(canvas.width/r.width),dy=(nt[0].clientY-lastTouchCenter.y)*(canvas.height/r.height);
+        if(Math.abs(dx)>3||Math.abs(dy)>3){touchDragMoved=true;cancelHold()}
+        viewX=dragViewX+dx;viewY=dragViewY+dy;clampPan();render();
+    }
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+    e.preventDefault();
+    if(e.changedTouches.length===1&&touches.length===1){
+        const t=e.changedTouches[0];
+        if(holdFired){
+            releaseHold(t.clientX,t.clientY);
+        }else if(!touchDragMoved){
+            cancelHold();
+            handleTap(t.clientX,t.clientY);
+        }else{
+            cancelHold();
+        }
+    }else{cancelHold()}
+    holdFired=false;
+    touches=[...e.touches];if(touches.length<2)lastPinchDist=0;lastTouchCenter=null;
+},{passive:false});
+function tDist(ts){const dx=ts[0].clientX-ts[1].clientX,dy=ts[0].clientY-ts[1].clientY;return Math.sqrt(dx*dx+dy*dy)}
+function tCenter(ts){return{x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2}}
+
+// ================================================================
+//  GAME CONFIG
+// ================================================================
+let GRID_SIZE=16,CELL_SIZE=1,DOT_RADIUS=3,LINE_WIDTH=4;
+let MIN_ARROWS=40,MAX_ARROWS=60,MIN_ARROW_LENGTH=2,MAX_ARROW_LENGTH=25;
+const MAX_GEN_ATTEMPTS=1500;
+const HARD_MIN_ARROWS=40; // never produce a puzzle with fewer than this
+let testArrows=[],nextArrowId=0;
+const activeAnimations=new Map(),bounceAnimations=new Map();
+let animationFrameId=null;
+const ANIM_DUR=3500,BOUNCE_DUR=700;
+let lives=3,maxLives=3,gameOver=false;
+let timeLimit=0,timeRemaining=0,timerInterval=null,gameStartTime=null,timerEnabled=false;
+let shapeMode='none',shapeGrid=null;
+let hintedArrowId=null,hintTimeout=null;
+const wrongArrows=new Set(); // arrow IDs that player tried and were blocked
+let heldArrowId=null;    // arrow being long-pressed (show its path)
+let showAllPaths=false;  // grid toggle: show all escape paths
+let holdTimer=null;      // timer for detecting long press vs tap
+let holdFired=false;     // did the hold trigger?
+let gameMode='daily'; // 'daily','level','free'
+let currentDailyDate=null,currentLevel=null;
+let winHandled=false;
+
+function updateDrawSizes(){LINE_WIDTH=Math.max(2,Math.min(4,CELL_SIZE*.18));DOT_RADIUS=Math.max(2,Math.min(4,CELL_SIZE*.12))}
+
+// ================================================================
+//  SHAPES
+// ================================================================
+function genShape(name,gs,rand){
+    const g=Array(gs).fill(null).map(()=>Array(gs).fill(false));
+    const cx=Math.floor(gs/2),cy=Math.floor(gs/2);
+    const r=rand||Math.random;
+    if(name==='none'){for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=true}
+    else if(name==='circle'){const rad=gs*.4;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=Math.sqrt((j-cx)**2+(i-cy)**2)<=rad}
+    else if(name==='diamond'){const s=gs*.5;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=Math.abs(j-cx)+Math.abs(i-cy)<=s}
+    else if(name==='heart'){const s=gs*.4;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++){const x=(j-cx)/s,y=-(i-cy)/s-.3;g[i][j]=Math.pow(x*x+y*y-1,3)-x*x*y*y*y<=.1}}
+    else if(name==='star'){const o=gs*.4,inn=gs*.2;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++){const x=j-cx,y=i-cy,a=Math.atan2(y,x)+Math.PI/2,d=Math.sqrt(x*x+y*y),pa=Math.PI*2/5,ma=((a%pa)+pa)%pa;const th=ma<pa/2?inn+(o-inn)*(2*ma/pa):o-(o-inn)*(2*(ma-pa/2)/pa);g[i][j]=d<=th}}
+    else if(name==='cross'){const arm=Math.floor(gs*.18);for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=Math.abs(j-cx)<=arm||Math.abs(i-cy)<=arm}
+    else if(name==='triangle'){for(let i=0;i<gs;i++)for(let j=0;j<gs;j++){const row=i/(gs-1),col=j/(gs-1)-.5;g[i][j]=row>=.1&&Math.abs(col)<=row*.5}}
+    else if(name==='ring'){const o=gs*.45,inn=gs*.2;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++){const d=Math.sqrt((j-cx)**2+(i-cy)**2);g[i][j]=d<=o&&d>=inn}}
+    else if(name==='hexagon'){const rad=gs*.45;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++){const x=(j-cx)/rad,y=(i-cy)/rad;g[i][j]=Math.max(Math.abs(x),Math.abs(y),Math.abs(x+y)*.577)<=1}}
+    else if(name==='lshape'){const t=Math.floor(gs*.35);for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=i>=gs-t||j<t}
+    else if(name==='crescent'){const r1=gs*.42,r2=gs*.35,off=gs*.18;for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=Math.sqrt((j-cx)**2+(i-cy)**2)<=r1&&Math.sqrt((j-cx-off)**2+(i-cy)**2)>r2}
+    else if(name==='blob'){const target=Math.floor(gs*gs*.45);const vis=Array(gs).fill(null).map(()=>Array(gs).fill(false));const fr=[[cy,cx]];vis[cy][cx]=true;let f=0;while(fr.length>0&&f<target){const idx=Math.floor(r()*Math.min(fr.length,8));const[row,col]=fr.splice(idx,1)[0];g[row][col]=true;f++;for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=row+dr,nc=col+dc;if(nr>=1&&nr<gs-1&&nc>=1&&nc<gs-1&&!vis[nr][nc]){vis[nr][nc]=true;if(r()<.75)fr.push([nr,nc])}}}}
+    else if(name==='swiss'){for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)g[i][j]=true;const nh=3+Math.floor(r()*4);for(let h=0;h<nh;h++){const hr=Math.floor(r()*(gs-4))+2,hc=Math.floor(r()*(gs-4))+2,hrad=1+Math.floor(r()*Math.max(1,gs*.12));for(let i=0;i<gs;i++)for(let j=0;j<gs;j++)if(Math.sqrt((j-hc)**2+(i-hr)**2)<=hrad)g[i][j]=false}}
+    return g;
+}
+function isInShape(r,c){if(!shapeGrid)return true;if(r<0||r>=GRID_SIZE||c<0||c>=GRID_SIZE)return false;return shapeGrid[r][c]}
+
+// ================================================================
+//  ARROW GENERATION ENGINE
+// ================================================================
+function ptUsed(r,c,arrows){for(const a of arrows)for(const p of a.path)if(p[0]===r&&p[1]===c)return true;return false}
+function adjPts(r,c){const a=[];for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<GRID_SIZE&&nc>=0&&nc<GRID_SIZE&&isInShape(nr,nc))a.push([nr,nc])}return a}
+
+function genArrowPath(existing,targetLen,preferCenter){
+    for(let att=0;att<100;att++){
+        let sr,sc;
+        if(preferCenter){const cr=Math.floor(GRID_SIZE/2),cc=Math.floor(GRID_SIZE/2),off=Math.floor(GRID_SIZE/4);sr=Math.max(0,Math.min(GRID_SIZE-1,cr+Math.floor(rng()*off*2)-off));sc=Math.max(0,Math.min(GRID_SIZE-1,cc+Math.floor(rng()*off*2)-off))}else{sr=Math.floor(rng()*GRID_SIZE);sc=Math.floor(rng()*GRID_SIZE)}
+        if(ptUsed(sr,sc,existing)||!isInShape(sr,sc))continue;
+        const path=[[sr,sc]];let curR=sr,curC=sc,lastDir=null;
+        while(path.length<targetLen){
+            const avail=adjPts(curR,curC).filter(([r,c])=>!ptUsed(r,c,existing)&&!path.some(([pr,pc])=>pr===r&&pc===c));
+            if(!avail.length)break;
+            const scored=avail.map(([r,c])=>{let s=rng();if(lastDir&&`${r-curR},${c-curC}`!==lastDir)s+=1.5;if(adjPts(r,c).some(([nr,nc])=>ptUsed(nr,nc,existing)))s+=1;return{pt:[r,c],s}});
+            scored.sort((a,b)=>b.s-a.s);const top=scored.slice(0,Math.max(1,Math.ceil(scored.length*.4)));const ch=top[Math.floor(rng()*top.length)];
+            path.push(ch.pt);lastDir=`${ch.pt[0]-curR},${ch.pt[1]-curC}`;curR=ch.pt[0];curC=ch.pt[1];
+        }
+        if(path.length>=2&&!selfBlocks(path))return path;
+    }
+    return null;
+}
+
+function selfBlocks(path){if(path.length<2)return false;const l=path[path.length-1],p=path[path.length-2];const dx=l[1]-p[1],dy=l[0]-p[0];let cr=l[0]+dy,cc=l[1]+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<path.length-1;i++)if(path[i][0]===cr&&path[i][1]===cc)return true;cr+=dy;cc+=dx}return false}
+
+function genPuzzle(){
+    const num=MIN_ARROWS+Math.floor(rng()*(MAX_ARROWS-MIN_ARROWS+1));
+    return rng()<.5?genLayered(num):genDistributed(num);
+}
+function genLayered(n){const arrows=[];const inner=Math.floor(n*.35);let att=0;while(arrows.length<inner&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):6+Math.floor(rng()*15);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),true);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}att=0;while(arrows.length<n&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):8+Math.floor(rng()*20);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),false);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}return arrows}
+function genDistributed(n){const arrows=[];let fails=0;const maxFails=200;while(arrows.length<n&&fails<maxFails){
+    const fillRatio=arrows.length/Math.max(1,n);
+    let tl;
+    if(fails>80){
+        tl=2+Math.floor(rng()*3); // desperate: tiny arrows to fill gaps
+    }else if(fillRatio>.6){
+        tl=2+Math.floor(rng()*5); // getting full: short-medium
+    }else{
+        // Mix of lengths — favor longer arrows early for satisfying gameplay
+        const roll=rng();
+        if(roll<.15){tl=2+Math.floor(rng()*3)}        // 15% short (2-4)
+        else if(roll<.45){tl=5+Math.floor(rng()*6)}    // 30% medium (5-10)
+        else if(roll<.75){tl=10+Math.floor(rng()*10)}   // 30% long (10-19)
+        else{tl=18+Math.floor(rng()*15)}                 // 25% extra long (18-32)
+    }
+    tl=Math.min(tl,MAX_ARROW_LENGTH);
+    const p=genArrowPath(arrows,tl,false);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows)){arrows.pop();fails++;continue}fails=0}else fails++}return arrows}
+// Multi-pass solvability: try several random removal orders
+function solvable(arrows){
+    for(let attempt=0;attempt<3;attempt++){
+        let t=arrows.map(a=>({...a,path:a.path.map(p=>[...p])}));
+        let stuck=false;
+        while(t.length>0){
+            const mv=[];
+            for(let i=0;i<t.length;i++)if(canMove(i,t))mv.push(i);
+            if(!mv.length){stuck=true;break}
+            t.splice(mv[Math.floor(Math.random()*mv.length)],1);
+        }
+        if(!stuck)return true; // found a valid order
+    }
+    return false;
+}
+
+// ================================================================
+//  GAME LOGIC
+// ================================================================
+function arrowDir(a){const p=a.path,l=p[p.length-1],s=p[p.length-2];return[l[0]-s[0],l[1]-s[1]]}
+function canMove(idx,arrows=testArrows){const a=arrows[idx];const[dy,dx]=arrowDir(a);const h=a.path[a.path.length-1];let cr=Math.round(h[0])+dy,cc=Math.round(h[1])+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<arrows.length;i++){if(i===idx||arrows[i].isAnimating)continue;for(const pt of arrows[i].path)if(Math.round(pt[0])===cr&&Math.round(pt[1])===cc)return false}cr+=dy;cc+=dx}return true}
+function arrowAt(cx,cy){for(let i=testArrows.length-1;i>=0;i--){const a=testArrows[i];for(const p of a.path){const pos=g2c(p[0],p[1]);if(Math.sqrt((cx-pos.x)**2+(cy-pos.y)**2)<=DOT_RADIUS+Math.max(5,CELL_SIZE*.25))return i}for(let j=0;j<a.path.length-1;j++){const p1=g2c(a.path[j][0],a.path[j][1]),p2=g2c(a.path[j+1][0],a.path[j+1][1]);if(dSeg(cx,cy,p1.x,p1.y,p2.x,p2.y)<=LINE_WIDTH+3)return i}}return-1}
+function dSeg(px,py,x1,y1,x2,y2){const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1,dot=A*C+B*D,len=C*C+D*D;let t=len?dot/len:-1;let xx,yy;if(t<0){xx=x1;yy=y1}else if(t>1){xx=x2;yy=y2}else{xx=x1+t*C;yy=y1+t*D}return Math.sqrt((px-xx)**2+(py-yy)**2)}
+
+// ================================================================
+//  ANIMATION
+// ================================================================
+function startExitAnim(idx){const a=testArrows[idx];if(a.isAnimating)return;a.isAnimating=true;const[dy,dx]=arrowDir(a);const orig=a.path.map(p=>[...p]);const ext=[...orig];let cr=orig[orig.length-1][0],cc=orig[orig.length-1][1];while(ext.length<orig.length+30){cr+=dy;cc+=dx;ext.push([cr,cc])}activeAnimations.set(a.id,{id:a.id,start:Date.now(),dur:ANIM_DUR,ext,origLen:orig.length});if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop)}
+// Bounce: snake forward toward blocker, hit it (flash red), snake back
+function startBounce(idx,br,bc){
+    const a=testArrows[idx];if(a.isAnimating)return;
+    a.isAnimating=true;
+    const[dy,dx]=arrowDir(a);
+    const origPath=a.path.map(p=>[...p]);
+    const head=origPath[origPath.length-1];
+    // Build extended path forward toward blocker (like exit anim)
+    let dist=dx!==0?Math.abs(bc-Math.round(head[1])):Math.abs(br-Math.round(head[0]));
+    dist=Math.max(dist,1);
+    const fwdPath=[...origPath];
+    let cr=head[0],cc=head[1];
+    for(let i=0;i<dist;i++){cr+=dy;cc+=dx;fwdPath.push([cr,cc])}
+    // Bounce uses the exit-style snake animation but goes forward then reverses
+    bounceAnimations.set(a.id,{
+        id:a.id,start:Date.now(),dur:BOUNCE_DUR,
+        origPath,fwdPath,origLen:origPath.length,
+        dy,dx,fwdSteps:dist
+    });
+    if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
+}
+
+function animLoop(){
+    if(!activeAnimations.size&&!bounceAnimations.size){animationFrameId=null;return}
+    const now=Date.now();const done=[],bdone=[];
+    for(const[id,s]of activeAnimations){const p=Math.min((now-s.start)/s.dur,1);const ci=testArrows.findIndex(a=>a.id===id);if(ci===-1){done.push(id);continue}const e=1-Math.pow(1-p,3),off=e*(s.ext.length-s.origLen+s.origLen);const np=[];for(let i=0;i<s.origLen;i++){const ni=i+off,bi=Math.floor(ni),fr=ni-bi;if(bi<s.ext.length-1){const p1=s.ext[bi],p2=s.ext[bi+1];const nr=p1[0]+(p2[0]-p1[0])*fr,nc=p1[1]+(p2[1]-p1[1])*fr;if(nr>=-1&&nr<=GRID_SIZE&&nc>=-1&&nc<=GRID_SIZE)np.push([nr,nc])}}testArrows[ci].path=np;if(p>=1||!np.length)done.push(id)}
+    for(const[id,s]of bounceAnimations){
+        const p=Math.min((now-s.start)/s.dur,1);
+        const ci=testArrows.findIndex(a=>a.id===id);
+        if(ci===-1){bdone.push(id);continue}
+        // Phase 1 (0→0.4): snake forward toward blocker
+        // Phase 2 (0.4→1.0): snake back to original position
+        let snakeOffset; // how many cells the whole arrow has shifted forward
+        if(p<0.4){
+            const t=p/0.4;
+            snakeOffset=s.fwdSteps*(1-Math.pow(1-t,2)); // ease out forward
+        }else{
+            const t=(p-0.4)/0.6;
+            snakeOffset=s.fwdSteps*(1-t*t); // ease in back
+        }
+        // Interpolate each point along the forward path
+        const np=[];
+        for(let i=0;i<s.origLen;i++){
+            const ni=i+snakeOffset;
+            const bi=Math.floor(ni),fr=ni-bi;
+            if(bi>=0&&bi<s.fwdPath.length-1){
+                const p1=s.fwdPath[bi],p2=s.fwdPath[bi+1];
+                np.push([p1[0]+(p2[0]-p1[0])*fr,p1[1]+(p2[1]-p1[1])*fr]);
+            }else if(bi<s.fwdPath.length){
+                np.push([...s.fwdPath[Math.min(bi,s.fwdPath.length-1)]]);
+            }
+        }
+        testArrows[ci].path=np.length?np:s.origPath.map(p=>[...p]);
+        // Flash bright red at impact, otherwise show persistent red if wrong
+        const isWrong=wrongArrows.has(id);
+        testArrows[ci].color=(p>=0.3&&p<=0.55)?'#f00':isWrong?'#c00':'#111';
+        if(p>=1)bdone.push(id);
+    }
+    render();
+    for(const id of done){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1)testArrows.splice(ci,1);activeAnimations.delete(id);wrongArrows.delete(id)}
+    // After removing arrows, check if any wrong-marked arrows are now free
+    if(done.length){for(let i=0;i<testArrows.length;i++){const a=testArrows[i];if(wrongArrows.has(a.id)&&!a.isAnimating&&canMove(i)){wrongArrows.delete(a.id);a.color='#111'}}}
+    for(const id of bdone){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1){const s=bounceAnimations.get(id);testArrows[ci].path=s.origPath.map(p=>[...p]);testArrows[ci].isAnimating=false;testArrows[ci].color=wrongArrows.has(id)?'#c00':'#111'}bounceAnimations.delete(id)}
+    if(bdone.length)render();
+    if(testArrows.length===0&&!activeAnimations.size){animationFrameId=null;render();return}
+    if(activeAnimations.size||bounceAnimations.size)animationFrameId=requestAnimationFrame(animLoop);else animationFrameId=null;
+}
+
+// ================================================================
+//  RENDERING
+// ================================================================
+function g2c(row,col){return{x:col*CELL_SIZE+CELL_SIZE/2,y:row*CELL_SIZE+CELL_SIZE/2}}
+
+function drawArrow(a){
+    const path=a.path;if(path.length<2)return;
+    const hinted=a.id===hintedArrowId;
+    if(hinted){const pulse=.3+Math.sin(Date.now()%1000/159)*.3;ctx.strokeStyle='#888';ctx.lineWidth=LINE_WIDTH+Math.max(4,CELL_SIZE*.3);ctx.globalAlpha=pulse;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}ctx.stroke()}
+    const isHeld=a.id===heldArrowId;
+    const isWrongArrow=wrongArrows.has(a.id);
+    const drawColor=isHeld&&!isWrongArrow?'#2563eb':a.color; // deep blue when held, but red arrows stay red
+    ctx.globalAlpha=a.isAnimating?.6:1;ctx.strokeStyle=drawColor;ctx.lineWidth=LINE_WIDTH;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();const sp=g2c(path[0][0],path[0][1]);ctx.moveTo(sp.x,sp.y);
+    for(let i=1;i<path.length;i++){const pos=g2c(path[i][0],path[i][1]);if(i>0&&i<path.length-1){const prev=g2c(path[i-1][0],path[i-1][1]),next=g2c(path[i+1][0],path[i+1][1]);const dx1=pos.x-prev.x,dy1=pos.y-prev.y,dx2=next.x-pos.x,dy2=next.y-pos.y;if(dx1!==dx2||dy1!==dy2){const cr=Math.max(3,CELL_SIZE*.3),l1=Math.sqrt(dx1*dx1+dy1*dy1),l2=Math.sqrt(dx2*dx2+dy2*dy2);ctx.lineTo(pos.x-(dx1/l1)*Math.min(cr,l1/2),pos.y-(dy1/l1)*Math.min(cr,l1/2));ctx.quadraticCurveTo(pos.x,pos.y,pos.x+(dx2/l2)*Math.min(cr,l2/2),pos.y+(dy2/l2)*Math.min(cr,l2/2))}else ctx.lineTo(pos.x,pos.y)}else ctx.lineTo(pos.x,pos.y)}
+    ctx.stroke();
+    // Arrowhead
+    const last=path[path.length-1],prev=path[path.length-2];const dx=last[1]-prev[1],dy=last[0]-prev[0];const ep=g2c(last[0],last[1]);const ahl=Math.max(5,CELL_SIZE*.35),ahw=LINE_WIDTH*2.5;let tx=ep.x,ty=ep.y;if(dx>0)tx+=ahl;else if(dx<0)tx-=ahl;else if(dy>0)ty+=ahl;else ty-=ahl;
+    ctx.fillStyle=drawColor;ctx.beginPath();if(dx!==0){ctx.moveTo(tx,ty);ctx.lineTo(ep.x,ep.y-ahw);ctx.lineTo(ep.x,ep.y+ahw)}else{ctx.moveTo(tx,ty);ctx.lineTo(ep.x-ahw,ep.y);ctx.lineTo(ep.x+ahw,ep.y)}ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+}
+
+// Draw escape path: straight line from arrow head all the way to grid edge
+// Passes through everything — no hint about blockers
+function drawEscapePath(a,highlight){
+    if(a.path.length<2||a.isAnimating)return;
+    const[dy,dx]=arrowDir(a);
+    const head=a.path[a.path.length-1];
+    const hr=Math.round(head[0]),hc=Math.round(head[1]);
+    let cr=hr,cc=hc;
+    while(cr+dy>=0&&cr+dy<GRID_SIZE&&cc+dx>=0&&cc+dx<GRID_SIZE){cr+=dy;cc+=dx}
+    const start=g2c(hr,hc);
+    const end=g2c(cr,cc);
+    const isWrong=wrongArrows.has(a.id);
+    ctx.save();
+    if(highlight){
+        ctx.strokeStyle=isWrong?'rgba(239,68,68,0.5)':'rgba(59,130,246,0.5)';
+        ctx.lineWidth=Math.max(2,LINE_WIDTH*1.2);
+        ctx.setLineDash([]);
+    }else{
+        ctx.strokeStyle=isWrong?'rgba(239,68,68,0.12)':'rgba(59,130,246,0.10)';
+        ctx.lineWidth=Math.max(1,LINE_WIDTH*0.5);
+        ctx.setLineDash([CELL_SIZE*0.3,CELL_SIZE*0.3]);
+    }
+    ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(start.x,start.y);
+    ctx.lineTo(end.x,end.y);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function togglePaths(){
+    showAllPaths=!showAllPaths;
+    updatePathBtn();
+    render();
+}
+function updatePathBtn(){
+    const btn=document.getElementById('pathToggleBtn');
+    if(!btn)return;
+    btn.style.background=showAllPaths?'#111':'rgba(255,255,255,.9)';
+    btn.style.color=showAllPaths?'#fff':'';
+}
+
+function render(){
+    ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.setTransform(viewScale,0,0,viewScale,viewX,viewY);
+    // Draw all escape paths first (behind arrows) if grid mode is on
+    if(showAllPaths){testArrows.forEach(a=>{if(!a.isAnimating)drawEscapePath(a,false)})}
+    // Draw held arrow's path (highlighted)
+    if(heldArrowId!==null){const ha=testArrows.find(a=>a.id===heldArrowId);if(ha&&!ha.isAnimating)drawEscapePath(ha,true)}
+    testArrows.forEach(a=>drawArrow(a));
+    if(gameOver)showGameOver();
+    else if(testArrows.length===0&&!activeAnimations.size)showWin();
+    ctx.setTransform(1,0,0,1,0,0);
+    if(viewScale>1.05){ctx.fillStyle='rgba(0,0,0,.15)';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(Math.round(viewScale*100)+'%',8,8)}
+    updateLives();updateCount();
+}
+
+let gameOverShown=false;
+
+function showGameOver(){
+    if(gameOverShown)return;
+    gameOverShown=true;
+    stopTimer();
+    const remaining=testArrows.filter(a=>!a.isAnimating).length;
+    document.getElementById('loseSub').textContent=remaining+' arrow'+(remaining!==1?'s':'')+' remaining';
+    setTimeout(()=>toggleModal('loseModal'),600);
+}
+
+function showWin(){
+    if(winHandled)return;
+    winHandled=true;
+    stopTimer();
+    const elapsed=Math.floor((Date.now()-gameStartTime)/1000),m=Math.floor(elapsed/60),s=elapsed%60;
+    const ts=`${m}:${String(s).padStart(2,'0')}`;
+    window.lastWinData={time:ts,lives,maxLives,mode:gameMode,date:currentDailyDate,level:currentLevel};
+    if(gameMode==='daily'&&currentDailyDate)saveDailyDone(ts);
+    if(gameMode==='level'&&currentLevel!==null)saveLevelDone(currentLevel,ts);
+
+    // Build win modal content
+    let title='Solved!';
+    if(gameMode==='daily')title='Daily complete!';
+    else if(gameMode==='level')title='Level '+currentLevel+' cleared!';
+    document.getElementById('winTitle').textContent=title;
+
+    const hearts='❤️'.repeat(lives)+'🖤'.repeat(maxLives-lives);
+    document.getElementById('winStats').innerHTML=
+        `<p style="font-size:28px;margin:8px 0;letter-spacing:4px">${hearts}</p>`+
+        `<p><strong>Time</strong> ${ts}</p>`;
+
+    // Next button label
+    const nextBtn=document.getElementById('winNextBtn');
+    if(gameMode==='level'){nextBtn.textContent='Level '+(currentLevel+1);nextBtn.style.display=''}
+    else if(gameMode==='daily'){nextBtn.style.display='none'}
+    else{nextBtn.textContent='New puzzle';nextBtn.style.display=''}
+
+    // Show native share button only if Web Share API is available
+    document.getElementById('nativeShareBtn').style.display=navigator.share?'':'none';
+
+    document.getElementById('winSub').textContent=
+        gameMode==='daily'?fmtDateShort(currentDailyDate):
+        gameMode==='level'?'Level '+currentLevel:'Free Play';
+
+    setTimeout(()=>toggleModal('winModal'),800);
+}
+
+function winNext(){
+    toggleModal('winModal');
+    if(gameMode==='level'&&currentLevel!==null)startLevel(currentLevel+1);
+    else startFreePlay();
+}
+
+function updateLives(){const el=document.getElementById('livesDisplay');el.innerHTML='';for(let i=0;i<maxLives;i++){const s=document.createElement('span');s.className='heart'+(i>=lives?' lost':'');s.textContent=i<lives?'❤️':'🖤';el.appendChild(s)}}
+function updateCount(){const el=document.getElementById('arrowCount');const n=testArrows.filter(a=>!a.isAnimating).length;el.textContent=n?n+' left':''}
+
+// ================================================================
+//  HINT
+// ================================================================
+function showHint(){if(gameOver)return;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}const mv=[];for(let i=0;i<testArrows.length;i++)if(!testArrows[i].isAnimating&&canMove(i))mv.push(testArrows[i]);if(!mv.length){hintedArrowId=null;render();return}hintedArrowId=mv[Math.floor(Math.random()*mv.length)].id;hintTimeout=setTimeout(()=>{hintedArrowId=null;hintTimeout=null;render()},5000);const anim=()=>{if(hintedArrowId!==null){render();requestAnimationFrame(anim)}};anim()}
+
+// ================================================================
+//  TAP HANDLER
+// ================================================================
+function fireArrow(idx){
+    const a=testArrows[idx];if(!a||a.isAnimating)return;
+    hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}
+    if(canMove(idx)){
+        wrongArrows.delete(a.id);
+        startExitAnim(idx);
+    }else{
+        if(!wrongArrows.has(a.id)){
+            lives--;if(lives<=0)gameOver=true;
+            wrongArrows.add(a.id);
+        }
+        const[dy,dx]=arrowDir(a);const h=a.path[a.path.length-1];let cr=Math.round(h[0])+dy,cc=Math.round(h[1])+dx,br=-1,bc=-1,bi=-1;
+        outer:while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<testArrows.length;i++){if(i===idx||testArrows[i].isAnimating)continue;for(const pt of testArrows[i].path)if(Math.round(pt[0])===cr&&Math.round(pt[1])===cc){br=cr;bc=cc;bi=i;break outer}}cr+=dy;cc+=dx}
+        if(br!==-1){startBounce(idx,br,bc)}else render()
+    }
+}
+
+function handleTap(cx,cy){
+    if(!gameOver&&testArrows.length===0&&!activeAnimations.size)return; // win modal handles this
+    if(gameOver)return;
+    const{x,y}=screenToCanvas(cx,cy);const idx=arrowAt(x,y);if(idx===-1)return;
+    fireArrow(idx);
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if((e.key==='h'||e.key==='H')&&e.target.tagName!=='INPUT')showHint()});
+
+// ================================================================
+//  TIMER
+// ================================================================
+function startTimer(){gameStartTime=Date.now();if(!timerEnabled)return;if(timerInterval)clearInterval(timerInterval);timeRemaining=timeLimit;timerInterval=setInterval(()=>{if(!gameOver){timeRemaining--;if(timeRemaining<=0){timeRemaining=0;gameOver=true;clearInterval(timerInterval)}render()}},1000)}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
+
+// ================================================================
+//  PERSISTENCE
+// ================================================================
+function loadData(){try{return JSON.parse(localStorage.getItem('arrows_v2'))||{}}catch{return{}}}
+function saveData(d){localStorage.setItem('arrows_v2',JSON.stringify(d))}
+function saveDailyDone(ts){const d=loadData();if(!d.daily)d.daily={};d.daily[currentDailyDate]={time:ts,lives};let streak=0;const dt=new Date();while(true){const ds=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;if(d.daily[ds]){streak++;dt.setDate(dt.getDate()-1)}else break}d.streak=streak;saveData(d)}
+function saveLevelDone(lvl,ts){const d=loadData();if(!d.levels)d.levels={};d.levels[lvl]={time:ts,lives};saveData(d)}
+function getCompletedLevels(){const d=loadData();return d.levels||{}}
+function getStreak(){return loadData().streak||0}
+function getDailyDone(){return loadData().daily||{}}
+
+// ================================================================
+//  GAME SETUP HELPERS
+// ================================================================
+function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArrows.clear();heldArrowId=null;showAllPaths=false;cancelHold();
+    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false}
+
+const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
+
+// ================================================================
+//  DAILY CHALLENGE
+// ================================================================
+function getDailyConfig(dateStr){
+    const seed=dateToSeed(dateStr+'_v6');const p=mulberry32(seed);
+    const shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
+    // Wide variety: some days are quick (40 arrows), some are marathon (150+)
+    // Pick a target arrow count first, then size the grid to fit
+    const tierRoll=p();
+    let targetArrows,gridSize;
+    if(tierRoll<0.25){
+        // Light day: 40-60 arrows
+        targetArrows=40+Math.floor(p()*20);
+        gridSize=16+Math.floor(p()*4)*2; // 16-22
+    }else if(tierRoll<0.55){
+        // Medium day: 60-100 arrows
+        targetArrows=60+Math.floor(p()*40);
+        gridSize=20+Math.floor(p()*4)*2; // 20-26
+    }else if(tierRoll<0.80){
+        // Big day: 100-150 arrows
+        targetArrows=100+Math.floor(p()*50);
+        gridSize=24+Math.floor(p()*5)*2; // 24-32
+    }else{
+        // Marathon day: 150-200 arrows
+        targetArrows=150+Math.floor(p()*50);
+        gridSize=30+Math.floor(p()*4)*2; // 30-36
+    }
+    return{gridSize,shape,
+        minArrows:Math.round(targetArrows*.9),
+        maxArrows:targetArrows,
+        minLength:2,
+        maxLength:Math.floor(gridSize*2) // allow really long snaking arrows
+    };
+}
+
+function startDaily(dateStr){
+    gameMode='daily';currentDailyDate=dateStr;currentLevel=null;
+    resetState();
+    const dc=getDailyConfig(dateStr);
+    GRID_SIZE=dc.gridSize;MIN_ARROWS=dc.minArrows;MAX_ARROWS=dc.maxArrows;MIN_ARROW_LENGTH=dc.minLength;MAX_ARROW_LENGTH=dc.maxLength;
+    rng=mulberry32(dateToSeed(dateStr+'_puzzle_v4'));
+    shapeGrid=genShape(dc.shape,GRID_SIZE,rng);
+    document.getElementById('gameTitle').textContent='Daily · '+fmtDateShort(dateStr);
+    document.getElementById('gameInfo').textContent='';
+    showScreen('gameScreen');
+    resizeCanvas();testArrows=genPuzzle();render();startTimer();
+}
+
+// ================================================================
+//  LEVEL SYSTEM  (200 levels, deterministic, progressive)
+// ================================================================
+const TOTAL_LEVELS=200;
+
+function getLevelConfig(n){
+    const t=n/TOTAL_LEVELS; // 0..1
+    const seed=dateToSeed('level_'+n+'_v5');const p=mulberry32(seed);
+    // Grid size: start at 16, scale to 36
+    const gridSize=Math.round(16+t*20);
+    // Arrow count: start at 40, scale up aggressively
+    const baseArrows=40+Math.round(t*160); // 40 → 200
+    const arrows=baseArrows+Math.floor(p()*Math.round(baseArrows*.15));
+    // Shape: first 5 levels are rectangle, then mix in shapes
+    let shape='none';
+    if(n>5)shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
+    return{gridSize,shape,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(arrows*.9)),maxArrows:arrows,minLength:2,maxLength:Math.floor(gridSize*2)};
+}
+
+function startLevel(n){
+    gameMode='level';currentLevel=n;currentDailyDate=null;
+    resetState();
+    const lc=getLevelConfig(n);
+    GRID_SIZE=lc.gridSize;MIN_ARROWS=lc.minArrows;MAX_ARROWS=lc.maxArrows;MIN_ARROW_LENGTH=lc.minLength;MAX_ARROW_LENGTH=lc.maxLength;
+    rng=mulberry32(dateToSeed('level_'+n+'_puzzle_v4'));
+    shapeGrid=genShape(lc.shape,GRID_SIZE,rng);
+    document.getElementById('gameTitle').textContent='Level '+n;
+    document.getElementById('gameInfo').textContent=lc.gridSize+'×'+lc.gridSize;
+    showScreen('gameScreen');
+    resizeCanvas();testArrows=genPuzzle();render();startTimer();
+}
+
+function startFreePlay(){
+    gameMode='free';currentDailyDate=null;currentLevel=null;
+    resetState();
+    GRID_SIZE=20;MIN_ARROWS=50;MAX_ARROWS=80;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=40;
+    rng=Math.random;
+    const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
+    shapeGrid=genShape(shape,GRID_SIZE);
+    document.getElementById('gameTitle').textContent='Free Play';
+    document.getElementById('gameInfo').textContent='';
+    showScreen('gameScreen');
+    resizeCanvas();testArrows=genPuzzle();render();startTimer();
+}
+
+function restartCurrent(){
+    if(gameMode==='daily'&&currentDailyDate)startDaily(currentDailyDate);
+    else if(gameMode==='level'&&currentLevel!==null)startLevel(currentLevel);
+    else startFreePlay();
+}
+
+function exitGame(){
+    stopTimer();
+    if(gameMode==='daily')showCalendar();
+    else if(gameMode==='level')showLevels();
+    else goHome();
+}
+
+// ================================================================
+//  CALENDAR UI
+// ================================================================
+const LAUNCH='2025-03-23';
+let calYear,calMonth;
+
+function showCalendar(){
+    const now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();
+    renderCal();showScreen('calScreen');
+}
+
+function renderCal(){
+    const c=document.getElementById('calMonth');const done=getDailyDone();const today=todayStr();const td=new Date();
+    const mns=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const canP=!(calYear===2025&&calMonth===2);const canN=!(calYear===td.getFullYear()&&calMonth===td.getMonth());
+    let h=`<div class="cal-nav"><button onclick="calYear=${calMonth===0?calYear-1:calYear};calMonth=${calMonth===0?11:calMonth-1};renderCal()" ${canP?'':'disabled'}>‹</button><span>${mns[calMonth]} ${calYear}</span><button onclick="calYear=${calMonth===11?calYear+1:calYear};calMonth=${calMonth===11?0:calMonth+1};renderCal()" ${canN?'':'disabled'}>›</button></div>`;
+    h+='<div class="cal-grid">';
+    for(const d of['S','M','T','W','T','F','S'])h+=`<div class="dh">${d}</div>`;
+    const fd=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate();
+    for(let i=0;i<fd;i++)h+='<div class="d empty"></div>';
+    for(let d=1;d<=dim;d++){
+        const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dt=new Date(calYear,calMonth,d);const fut=dt>td;const pre=ds<LAUNCH;const isT=ds===today;const dn=!!done[ds];
+        let cls='d';if(fut||pre)cls+=' future';if(isT)cls+=' today';if(dn)cls+=' done';
+        const click=(!fut&&!pre)?`onclick="startDaily('${ds}')"`:''
+        const tm=dn?`<div class="tm">${done[ds].time}</div>`:'';
+        h+=`<div class="${cls}" ${click}>${d}${tm}</div>`;
+    }
+    h+='</div>';c.innerHTML=h;
+}
+
+// ================================================================
+//  LEVELS UI
+// ================================================================
+let lvlPage=0;
+const LEVELS_PER_PAGE=25;
+
+function showLevels(){
+    // Auto-navigate to the page with the current level
+    const done=getCompletedLevels();const count=Object.keys(done).length;
+    lvlPage=Math.floor(count/LEVELS_PER_PAGE);
+    renderLvls();showScreen('lvlScreen');
+}
+
+function renderLvls(){
+    const grid=document.getElementById('lvlGrid');const done=getCompletedLevels();
+    const start=lvlPage*LEVELS_PER_PAGE+1;const end=Math.min(start+LEVELS_PER_PAGE-1,TOTAL_LEVELS);
+    // Find highest completed level
+    let highest=0;for(const k of Object.keys(done)){const n=parseInt(k);if(n>highest)highest=n}
+    let h='';
+    for(let n=start;n<=end;n++){
+        const isDone=!!done[n];const isCurrent=n===highest+1;const isLocked=n>highest+1;
+        let cls='lvl-cell';if(isDone)cls+=' done';else if(isCurrent)cls+=' current';else if(isLocked)cls+=' locked';
+        const click=isLocked?'':`onclick="startLevel(${n})"`;
+        h+=`<div class="${cls}" ${click}>${n}</div>`;
+    }
+    grid.innerHTML=h;
+    document.getElementById('lvlPageLabel').textContent=`${start}–${end}`;
+    document.getElementById('lvlPrevBtn').disabled=lvlPage===0;
+    document.getElementById('lvlNextBtn').disabled=end>=TOTAL_LEVELS;
+    document.getElementById('lvlInfo').textContent=Object.keys(done).length+'/'+TOTAL_LEVELS;
+}
+
+function lvlPagePrev(){if(lvlPage>0){lvlPage--;renderLvls()}}
+function lvlPageNext(){if((lvlPage+1)*LEVELS_PER_PAGE<TOTAL_LEVELS){lvlPage++;renderLvls()}}
+
+// ================================================================
+//  HOME
+// ================================================================
+function updateHomeStats(){
+    const streak=getStreak();const el=document.getElementById('homeStreak');
+    el.innerHTML=streak>1?`🔥 <b>${streak}-day streak</b>`:'';
+    const done=getCompletedLevels();
+    document.getElementById('lvlProgress').textContent=Object.keys(done).length+' / '+TOTAL_LEVELS+' completed';
+}
+
+// ================================================================
+//  SHARE
+// ================================================================
+function getShareText(){
+    const d=window.lastWinData;if(!d)return'';
+    const hdr=d.mode==='daily'?'Arrows Daily '+d.date:d.mode==='level'?'Arrows Level '+d.level:'Arrows Free Play';
+    const hearts='❤️'.repeat(d.lives)+'🖤'.repeat(d.maxLives-d.lives);
+    return hdr+'\n'+hearts+'\n⏱ '+d.time;
+}
+function nativeShare(){
+    const txt=getShareText();if(!txt)return;
+    navigator.share({title:'Arrows',text:txt}).catch(()=>{});
+}
+function copyResults(){
+    const txt=getShareText();if(!txt)return;
+    navigator.clipboard.writeText(txt).then(()=>{
+        const b=event.target;b.textContent='Copied!';setTimeout(()=>b.textContent='Copy results',2000);
+    }).catch(()=>{});
+}
+
+function fmtDateShort(ds){const[y,m,d]=ds.split('-').map(Number);return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+d}
+
+// ================================================================
+//  PWA
+// ================================================================
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ================================================================
+//  INIT
+// ================================================================
+GRID_SIZE=16;CELL_SIZE=1;shapeGrid=genShape('none',GRID_SIZE);resizeCanvas();
+updateHomeStats();
+</script>
+</body>
+</html>
