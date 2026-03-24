@@ -414,7 +414,7 @@ const HARD_MIN_ARROWS=40; // never produce a puzzle with fewer than this
 let testArrows=[],nextArrowId=0;
 const activeAnimations=new Map(),bounceAnimations=new Map();
 let animationFrameId=null;
-const ANIM_DUR=2000,BOUNCE_DUR=700;
+const ANIM_DUR=1200,BOUNCE_DUR=700;
 let lives=3,maxLives=3,gameOver=false;
 let timeLimit=0,timeRemaining=0,timerInterval=null,gameStartTime=null,timerEnabled=false;
 let shapeMode='none',shapeGrid=null;
@@ -585,19 +585,15 @@ function animLoop(){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
         if(ci===-1){done.push(id);continue}
-        // Slide a window of origLen points along the trail
-        // offset is a float — interpolate between trail points for smoothness
-        const eased=p*p; // ease in: accelerates out
-        const offset=eased*s.maxOffset;
+        // Integer offset — no fractional interpolation means no diagonals
+        const eased=p*p;
+        const offset=Math.round(eased*s.maxOffset);
         const np=[];
         for(let i=0;i<s.origLen;i++){
-            const ti=offset+i; // position on the trail
-            const bi=Math.floor(ti),fr=ti-bi;
-            if(bi>=0&&bi<s.trail.length-1){
-                const a1=s.trail[bi],a2=s.trail[bi+1];
-                const nr=a1[0]+(a2[0]-a1[0])*fr;
-                const nc=a1[1]+(a2[1]-a1[1])*fr;
-                if(nr>=-1&&nr<=GRID_SIZE&&nc>=-1&&nc<=GRID_SIZE)np.push([nr,nc]);
+            const ti=offset+i;
+            if(ti>=0&&ti<s.trail.length){
+                const pt=s.trail[ti];
+                if(pt[0]>=-1&&pt[0]<=GRID_SIZE&&pt[1]>=-1&&pt[1]<=GRID_SIZE)np.push(pt);
             }
         }
         testArrows[ci].path=np;
