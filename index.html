@@ -352,14 +352,21 @@ canvas.addEventListener('click',e=>{
 
 // Touch pinch+pan+hold
 let touches=[],lastPinchDist=0,lastTouchCenter=null,touchDragMoved=false;
-let touchStartX=0,touchStartY=0; // track start position to detect drag vs tap
-const TOUCH_DRAG_THRESHOLD=8; // pixels of movement before it counts as a drag
+let touchStartX=0,touchStartY=0;
+let touchStartTime=0; // track when touch started for quick-tap detection
+let lastTapTime=0; // debounce rapid taps on same spot
+const TOUCH_DRAG_THRESHOLD=10; // pixels of movement before it counts as a drag
+const QUICK_TAP_MS=150; // taps shorter than this skip hold logic entirely
 
 canvas.addEventListener('touchstart',e=>{
-    e.preventDefault();touches=[...e.touches];touchDragMoved=false;
-    if(touches.length===2){lastPinchDist=tDist(touches);lastTouchCenter=tCenter(touches);cancelHold()}
+    e.preventDefault();isTouch=true;hoveredArrowIdx=-1;
+    // Fully reset state from any previous touch
+    cancelHold();holdFired=false;touchDragMoved=false;
+    touches=[...e.touches];
+    if(touches.length===2){lastPinchDist=tDist(touches);lastTouchCenter=tCenter(touches)}
     else if(touches.length===1){
         touchStartX=touches[0].clientX;touchStartY=touches[0].clientY;
+        touchStartTime=Date.now();
         startHold(touches[0].clientX,touches[0].clientY);
         lastTouchCenter={x:touches[0].clientX,y:touches[0].clientY};dragViewX=viewX;dragViewY=viewY;
     }
@@ -373,16 +380,13 @@ canvas.addEventListener('touchmove',e=>{
         if(lastTouchCenter){const r=canvas.getBoundingClientRect();viewX+=(nc.x-lastTouchCenter.x)*(canvas.width/r.width);viewY+=(nc.y-lastTouchCenter.y)*(canvas.height/r.height);clampPan();render()}
         lastPinchDist=nd;lastTouchCenter=nc;touchDragMoved=true;
     }else if(nt.length===1){
-        // Always check if finger moved enough to count as drag
         const movedX=Math.abs(nt[0].clientX-touchStartX);
         const movedY=Math.abs(nt[0].clientY-touchStartY);
         if(movedX>TOUCH_DRAG_THRESHOLD||movedY>TOUCH_DRAG_THRESHOLD){
             touchDragMoved=true;cancelHold();
         }
-        // Pan when zoomed in
         if(viewScale>1&&lastTouchCenter){
             const r=canvas.getBoundingClientRect();
-            const dx=(nt[0].clientX-lastTouchCenter.x)*(canvas.width/r.width),dy=(nt[0].clientY-lastTouchCenter.y)*(canvas.height/r.height);
             viewX=dragViewX+(nt[0].clientX-touchStartX)*(canvas.width/r.width);
             viewY=dragViewY+(nt[0].clientY-touchStartY)*(canvas.height/r.height);
             clampPan();render();
@@ -391,13 +395,19 @@ canvas.addEventListener('touchmove',e=>{
 },{passive:false});
 canvas.addEventListener('touchend',e=>{
     e.preventDefault();
+    const now=Date.now();
     if(e.changedTouches.length===1&&touches.length===1){
         const t=e.changedTouches[0];
+        const tapDuration=now-touchStartTime;
         if(holdFired){
             releaseHold(t.clientX,t.clientY);
         }else if(!touchDragMoved){
             cancelHold();
-            handleTap(t.clientX,t.clientY);
+            // Quick tap: fire immediately, skip debounce for different arrows
+            if(now-lastTapTime>60){// 60ms debounce to prevent phantom double-taps
+                lastTapTime=now;
+                handleTap(t.clientX,t.clientY);
+            }
         }else{
             cancelHold();
         }
@@ -413,8 +423,8 @@ function tCenter(ts){return{x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+t
 // ================================================================
 let GRID_SIZE=16,CELL_SIZE=1,DOT_RADIUS=3,LINE_WIDTH=4;
 let MIN_ARROWS=40,MAX_ARROWS=60,MIN_ARROW_LENGTH=2,MAX_ARROW_LENGTH=25;
-const MAX_GEN_ATTEMPTS=1500;
-const HARD_MIN_ARROWS=40; // never produce a puzzle with fewer than this
+const MAX_GEN_ATTEMPTS=3000;
+const HARD_MIN_ARROWS=55; // never produce a puzzle with fewer than this
 let testArrows=[],nextArrowId=0;
 const activeAnimations=new Map(),bounceAnimations=new Map();
 let animationFrameId=null;
@@ -489,7 +499,7 @@ function genPuzzle(){
     return rng()<.5?genLayered(num):genDistributed(num);
 }
 function genLayered(n){const arrows=[];const inner=Math.floor(n*.35);let att=0;while(arrows.length<inner&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):6+Math.floor(rng()*15);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),true);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}att=0;while(arrows.length<n&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):8+Math.floor(rng()*20);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),false);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}return arrows}
-function genDistributed(n){const arrows=[];let fails=0;const maxFails=200;while(arrows.length<n&&fails<maxFails){
+function genDistributed(n){const arrows=[];let fails=0;const maxFails=400;while(arrows.length<n&&fails<maxFails){
     const fillRatio=arrows.length/Math.max(1,n);
     let tl;
     if(fails>80){
@@ -659,10 +669,10 @@ function animLoop(){
 // ================================================================
 function g2c(row,col){return{x:col*CELL_SIZE+CELL_SIZE/2,y:row*CELL_SIZE+CELL_SIZE/2}}
 
-// Hover tracking
-let hoveredArrowIdx=-1;
+// Hover tracking (mouse only — skip on touch devices)
+let hoveredArrowIdx=-1,isTouch=false;
 canvas.addEventListener('mousemove',e=>{
-    if(isDragging||gameOver)return;
+    if(isTouch||isDragging||gameOver)return;
     const{x,y}=screenToCanvas(e.clientX,e.clientY);
     const idx=arrowAt(x,y);
     if(idx!==hoveredArrowIdx){
@@ -671,7 +681,7 @@ canvas.addEventListener('mousemove',e=>{
         render();
     }
 });
-canvas.addEventListener('mouseleave',()=>{if(hoveredArrowIdx!==-1){hoveredArrowIdx=-1;render()}});
+canvas.addEventListener('mouseleave',()=>{if(!isTouch&&hoveredArrowIdx!==-1){hoveredArrowIdx=-1;render()}});
 
 // Particles
 const particles=[];
@@ -1006,7 +1016,7 @@ function getDailyDone(){return loadData().daily||{}}
 //  GAME SETUP HELPERS
 // ================================================================
 function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArrows.clear();heldArrowId=null;showAllPaths=false;cancelHold();
-    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0}
+    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0;lastTapTime=0}
 
 const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
 
@@ -1021,21 +1031,21 @@ function getDailyConfig(dateStr){
     const tierRoll=p();
     let targetArrows,gridSize;
     if(tierRoll<0.25){
-        // Light day: 40-60 arrows
-        targetArrows=40+Math.floor(p()*20);
-        gridSize=16+Math.floor(p()*4)*2; // 16-22
-    }else if(tierRoll<0.55){
-        // Medium day: 60-100 arrows
-        targetArrows=60+Math.floor(p()*40);
+        // Light day: 60-90 arrows
+        targetArrows=60+Math.floor(p()*30);
         gridSize=20+Math.floor(p()*4)*2; // 20-26
+    }else if(tierRoll<0.55){
+        // Medium day: 100-160 arrows
+        targetArrows=100+Math.floor(p()*60);
+        gridSize=26+Math.floor(p()*4)*2; // 26-32
     }else if(tierRoll<0.80){
-        // Big day: 100-150 arrows
-        targetArrows=100+Math.floor(p()*50);
-        gridSize=24+Math.floor(p()*5)*2; // 24-32
+        // Big day: 170-250 arrows
+        targetArrows=170+Math.floor(p()*80);
+        gridSize=32+Math.floor(p()*5)*2; // 32-40
     }else{
-        // Marathon day: 150-200 arrows
-        targetArrows=150+Math.floor(p()*50);
-        gridSize=30+Math.floor(p()*4)*2; // 30-36
+        // Marathon day: 260-350 arrows
+        targetArrows=260+Math.floor(p()*90);
+        gridSize=38+Math.floor(p()*5)*2; // 38-46
     }
     return{gridSize,shape,
         minArrows:Math.round(targetArrows*.9),
@@ -1065,10 +1075,10 @@ const TOTAL_LEVELS=200;
 function getLevelConfig(n){
     const t=n/TOTAL_LEVELS; // 0..1
     const seed=dateToSeed('level_'+n+'_v5');const p=mulberry32(seed);
-    // Grid size: start at 16, scale to 36
-    const gridSize=Math.round(16+t*20);
-    // Arrow count: start at 40, scale up aggressively
-    const baseArrows=40+Math.round(t*160); // 40 → 200
+    // Grid size: start at 20, scale to 46
+    const gridSize=Math.round(20+t*26);
+    // Arrow count: start at 60, scale up aggressively
+    const baseArrows=60+Math.round(t*290); // 60 → 350
     const arrows=baseArrows+Math.floor(p()*Math.round(baseArrows*.15));
     // Shape: first 5 levels are rectangle, then mix in shapes
     let shape='none';
@@ -1091,7 +1101,7 @@ function startLevel(n){
 function startFreePlay(){
     gameMode='free';currentDailyDate=null;currentLevel=null;
     resetState();
-    GRID_SIZE=20;MIN_ARROWS=50;MAX_ARROWS=80;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=40;
+    GRID_SIZE=28;MIN_ARROWS=80;MAX_ARROWS=140;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=50;
     rng=Math.random;
     const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
     shapeGrid=genShape(shape,GRID_SIZE);
