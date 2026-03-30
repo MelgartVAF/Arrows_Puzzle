@@ -43,23 +43,29 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ---- GAME ---- */
 .game-screen{padding-bottom:0;height:100vh;height:100dvh;overflow:hidden}
-.game-bar{width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.game-bar .bar-btn{width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text);font-family:inherit;flex-shrink:0}
+.game-bar{width:100%;display:flex;align-items:center;padding:10px 14px;flex-shrink:0}
+.bar-left{display:flex;gap:6px;flex:1;align-items:center}
+.bar-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex:0 0 auto}
+.bar-right{display:flex;gap:6px;flex:1;align-items:center;justify-content:flex-end}
+.game-bar .bar-btn{width:38px;height:38px;border:2px solid var(--border);border-radius:12px;background:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--text);font-family:inherit;flex-shrink:0;transition:border-color .15s,background .15s}
+.game-bar .bar-btn:hover{border-color:var(--accent)}
 .game-bar .bar-btn:active{background:#f0f0f0}
-.bar-title{font-size:14px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.diff-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.5px;flex-shrink:0}
-.diff-hard{background:#f0f0f0;color:#333}
-.diff-super{background:#fce7f3;color:#db2777}
-.diff-nightmare{background:#fef2f2;color:#dc2626}
-.bar-right{display:flex;gap:4px;flex-shrink:0}
-.lives{font-size:20px;display:flex;gap:2px;flex-shrink:0}
+.bar-title{font-size:13px;font-weight:600;color:var(--dim);white-space:nowrap}
+.diff-badge{font-size:14px;font-weight:800;letter-spacing:.5px}
+.diff-hard{color:#333}
+.diff-super{color:#db2777}
+.diff-nightmare{color:#dc2626}
+.lives{font-size:18px;display:flex;gap:1px}
 .lives .heart{transition:opacity .3s,transform .3s;display:inline-block}
-.lives .heart.lost{opacity:.2}
+.lives .heart.lost{opacity:.15}
 .lives .heart.pulse{animation:heartPulse .4s ease-out}
 @keyframes heartPulse{0%{transform:scale(1)}30%{transform:scale(1.4)}100%{transform:scale(1)}}
 .arrow-count{font-size:12px;font-weight:600;color:var(--dim);flex-shrink:0;transition:transform .2s}
 .arrow-count.tick{animation:countTick .3s ease-out}
 @keyframes countTick{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+.hint-btn{height:34px;padding:0 14px;border:2px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text);font-family:inherit;display:flex;align-items:center;gap:5px;transition:border-color .15s,background .15s}
+.hint-btn:hover{border-color:var(--accent)}
+.hint-btn:active{background:#f0f0f0}
 
 .canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
@@ -169,14 +175,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- ==================== GAME ==================== -->
 <div class="screen game-screen" id="gameScreen">
     <div class="game-bar">
-        <button class="bar-btn" onclick="exitGame()">←</button>
-        <div class="lives" id="livesDisplay"></div>
-        <div class="bar-title" id="gameTitle">Daily</div>
-        <span class="diff-badge" id="diffBadge"></span>
-        <div class="arrow-count" id="arrowCount"></div>
-        <div class="bar-right">
-            <button class="bar-btn" onclick="showHint()" title="Hint">?</button>
+        <div class="bar-left">
+            <button class="bar-btn" onclick="exitGame()">←</button>
             <button class="bar-btn" onclick="restartCurrent()" title="Restart">↺</button>
+        </div>
+        <div class="bar-center">
+            <div class="bar-title" id="gameTitle">Daily</div>
+            <span class="diff-badge" id="diffBadge"></span>
+            <div class="lives" id="livesDisplay"></div>
+        </div>
+        <div class="bar-right">
+            <div class="arrow-count" id="arrowCount"></div>
+            <button class="hint-btn" onclick="showHint()">💡 Hint</button>
         </div>
     </div>
     <div class="canvas-wrap">
@@ -700,17 +710,18 @@ function animLoop(){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
         if(ci===-1){bdone.push(id);continue}
-        // Phase 1 (0→0.35): snap forward toward blocker
-        // Phase 2 (0.35→1.0): elastic bounce back
+        // Phase 1 (0→0.3): snap forward toward blocker
+        // Phase 2 (0.3→1.0): damped spring back
         let snakeOffset;
-        if(p<0.35){
-            const t=p/0.35;
-            snakeOffset=s.fwdSteps*(1-Math.pow(1-t,3)); // ease out forward (cubic)
+        if(p<0.3){
+            const t=p/0.3;
+            snakeOffset=s.fwdSteps*t*t; // ease in forward
         }else{
-            const t=(p-0.35)/0.65;
-            // Elastic ease out for satisfying bounce
-            const elastic=1-Math.pow(1-t,3)*(Math.cos(t*Math.PI*2.5)*0.3+1);
-            snakeOffset=s.fwdSteps*(1-Math.min(1,elastic));
+            const t=(p-0.3)/0.7;
+            // Damped bounce: decaying cosine
+            const decay=Math.exp(-4*t);
+            const bounce=decay*Math.cos(t*Math.PI*2);
+            snakeOffset=s.fwdSteps*Math.max(0,bounce*0.3);
         }
         // Interpolate each point along the forward path
         const np=[];
@@ -734,7 +745,7 @@ function animLoop(){
     for(const id of done){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1)testArrows.splice(ci,1);activeAnimations.delete(id);wrongArrows.delete(id)}
     // After removing arrows, check if any wrong-marked arrows are now free
     if(done.length){for(let i=0;i<testArrows.length;i++){const a=testArrows[i];if(wrongArrows.has(a.id)&&!a.isAnimating&&canMove(i)){wrongArrows.delete(a.id);a.color='#111'}}}
-    for(const id of bdone){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1){const s=bounceAnimations.get(id);testArrows[ci].path=s.origPath.map(p=>[...p]);testArrows[ci].isAnimating=false;testArrows[ci].color=wrongArrows.has(id)?'#c00':'#111'}bounceAnimations.delete(id)}
+    for(const id of bdone){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1){const s=bounceAnimations.get(id);testArrows[ci].path=s.origPath.map(p=>[...p]);testArrows[ci].isAnimating=false;testArrows[ci].color=wrongArrows.has(id)?'#dc2626':'#111'}bounceAnimations.delete(id)}
     if(bdone.length)render();
     if(testArrows.length===0&&!activeAnimations.size){animationFrameId=null;render();return}
     if(activeAnimations.size||bounceAnimations.size)animationFrameId=requestAnimationFrame(animLoop);else animationFrameId=null;
@@ -790,7 +801,7 @@ function drawParticles(){
 
 // Screen shake
 let shakeAmount=0,shakeDecay=0;
-function triggerShake(){shakeAmount=Math.max(3,CELL_SIZE*0.15);shakeDecay=Date.now()}
+function triggerShake(){shakeAmount=isTouch?Math.max(2,CELL_SIZE*0.08):Math.max(3,CELL_SIZE*0.12);shakeDecay=Date.now()}
 
 function drawGridDots(){
     ctx.fillStyle='rgba(0,0,0,0.06)';
