@@ -47,6 +47,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .game-bar .bar-btn{width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text);font-family:inherit;flex-shrink:0}
 .game-bar .bar-btn:active{background:#f0f0f0}
 .bar-title{font-size:14px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.diff-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.5px;flex-shrink:0}
+.diff-hard{background:#f0f0f0;color:#333}
+.diff-super{background:#fce7f3;color:#db2777}
+.diff-nightmare{background:#fef2f2;color:#dc2626}
 .bar-right{display:flex;gap:4px;flex-shrink:0}
 .lives{font-size:20px;display:flex;gap:2px;flex-shrink:0}
 .lives .heart{transition:opacity .3s,transform .3s;display:inline-block}
@@ -60,8 +64,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
 #gameCanvas.grabbing{cursor:grabbing}
-.zoom-btns{position:absolute;bottom:8px;right:8px;display:flex;gap:4px;z-index:10}
-.zoom-btns button{width:34px;height:34px;border:1.5px solid var(--border);border-radius:8px;background:rgba(255,255,255,.9);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 
 /* ---- CALENDAR ---- */
 .cal-screen{padding-bottom:40px}
@@ -170,6 +172,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <button class="bar-btn" onclick="exitGame()">←</button>
         <div class="lives" id="livesDisplay"></div>
         <div class="bar-title" id="gameTitle">Daily</div>
+        <span class="diff-badge" id="diffBadge"></span>
         <div class="arrow-count" id="arrowCount"></div>
         <div class="bar-right">
             <button class="bar-btn" onclick="showHint()" title="Hint">?</button>
@@ -178,12 +181,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
     <div class="canvas-wrap">
         <canvas id="gameCanvas"></canvas>
-        <div class="zoom-btns">
-            <button onclick="togglePaths()" id="pathToggleBtn" title="Show all paths" style="font-size:14px;font-weight:700">#</button>
-            <button onclick="zoomIn()">+</button>
-            <button onclick="zoomOut()">−</button>
-            <button onclick="zoomReset()">⟲</button>
-        </div>
     </div>
 </div>
 
@@ -469,65 +466,138 @@ function genShape(name,gs,rand){
 function isInShape(r,c){if(!shapeGrid)return true;if(r<0||r>=GRID_SIZE||c<0||c>=GRID_SIZE)return false;return shapeGrid[r][c]}
 
 // ================================================================
-//  ARROW GENERATION ENGINE
+//  ARROW GENERATION ENGINE (occupancy-grid accelerated)
 // ================================================================
-function ptUsed(r,c,arrows){for(const a of arrows)for(const p of a.path)if(p[0]===r&&p[1]===c)return true;return false}
+// Occupancy grid: grid[r][c] = arrow index or -1
+let occGrid=null;
+function makeOccGrid(){
+    occGrid=Array(GRID_SIZE).fill(null).map(()=>new Int16Array(GRID_SIZE).fill(-1));
+}
+function markArrow(idx,arrows){for(const p of arrows[idx].path)occGrid[p[0]][p[1]]=idx}
+function unmarkArrow(idx,arrows){for(const p of arrows[idx].path)if(occGrid[p[0]][p[1]]===idx)occGrid[p[0]][p[1]]=-1}
+function rebuildOccGrid(arrows){makeOccGrid();for(let i=0;i<arrows.length;i++)markArrow(i,arrows)}
+function gridUsed(r,c){return occGrid[r][c]!==-1}
+
 function adjPts(r,c){const a=[];for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<GRID_SIZE&&nc>=0&&nc<GRID_SIZE&&isInShape(nr,nc))a.push([nr,nc])}return a}
 
 function genArrowPath(existing,targetLen,preferCenter){
     for(let att=0;att<100;att++){
         let sr,sc;
         if(preferCenter){const cr=Math.floor(GRID_SIZE/2),cc=Math.floor(GRID_SIZE/2),off=Math.floor(GRID_SIZE/4);sr=Math.max(0,Math.min(GRID_SIZE-1,cr+Math.floor(rng()*off*2)-off));sc=Math.max(0,Math.min(GRID_SIZE-1,cc+Math.floor(rng()*off*2)-off))}else{sr=Math.floor(rng()*GRID_SIZE);sc=Math.floor(rng()*GRID_SIZE)}
-        if(ptUsed(sr,sc,existing)||!isInShape(sr,sc))continue;
-        const path=[[sr,sc]];let curR=sr,curC=sc,lastDir=null;
+        if(gridUsed(sr,sc)||!isInShape(sr,sc))continue;
+        const path=[[sr,sc]];const inPath=new Set([sr*GRID_SIZE+sc]);let curR=sr,curC=sc,lastDir=null;
         while(path.length<targetLen){
-            const avail=adjPts(curR,curC).filter(([r,c])=>!ptUsed(r,c,existing)&&!path.some(([pr,pc])=>pr===r&&pc===c));
+            const avail=adjPts(curR,curC).filter(([r,c])=>!gridUsed(r,c)&&!inPath.has(r*GRID_SIZE+c));
             if(!avail.length)break;
-            const scored=avail.map(([r,c])=>{let s=rng();if(lastDir&&`${r-curR},${c-curC}`!==lastDir)s+=1.5;if(adjPts(r,c).some(([nr,nc])=>ptUsed(nr,nc,existing)))s+=1;return{pt:[r,c],s}});
+            const scored=avail.map(([r,c])=>{let s=rng();if(lastDir&&`${r-curR},${c-curC}`!==lastDir)s+=1.5;if(adjPts(r,c).some(([nr,nc])=>gridUsed(nr,nc)))s+=1;return{pt:[r,c],s}});
             scored.sort((a,b)=>b.s-a.s);const top=scored.slice(0,Math.max(1,Math.ceil(scored.length*.4)));const ch=top[Math.floor(rng()*top.length)];
-            path.push(ch.pt);lastDir=`${ch.pt[0]-curR},${ch.pt[1]-curC}`;curR=ch.pt[0];curC=ch.pt[1];
+            path.push(ch.pt);inPath.add(ch.pt[0]*GRID_SIZE+ch.pt[1]);
+            lastDir=`${ch.pt[0]-curR},${ch.pt[1]-curC}`;curR=ch.pt[0];curC=ch.pt[1];
         }
         if(path.length>=2&&!selfBlocks(path))return path;
     }
     return null;
 }
 
-function selfBlocks(path){if(path.length<2)return false;const l=path[path.length-1],p=path[path.length-2];const dx=l[1]-p[1],dy=l[0]-p[0];let cr=l[0]+dy,cc=l[1]+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<path.length-1;i++)if(path[i][0]===cr&&path[i][1]===cc)return true;cr+=dy;cc+=dx}return false}
+function selfBlocks(path){if(path.length<2)return false;const l=path[path.length-1],p=path[path.length-2];const dx=l[1]-p[1],dy=l[0]-p[0];const pathSet=new Set(path.map(([r,c])=>r*GRID_SIZE+c));let cr=l[0]+dy,cc=l[1]+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){if(pathSet.has(cr*GRID_SIZE+cc))return true;cr+=dy;cc+=dx}return false}
+
+// Fast canMove using occupancy grid — O(gridSize) instead of O(n*pathLen)
+function canMoveFast(idx,arrows){
+    const a=arrows[idx];const p=a.path,l=p[p.length-1],s=p[p.length-2];
+    const dy=l[0]-s[0],dx=l[1]-s[1];
+    let cr=Math.round(l[0])+dy,cc=Math.round(l[1])+dx;
+    while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){
+        if(occGrid[cr][cc]!==-1&&occGrid[cr][cc]!==idx)return false;
+        cr+=dy;cc+=dx;
+    }
+    return true;
+}
 
 function genPuzzle(){
+    makeOccGrid();
     const num=MIN_ARROWS+Math.floor(rng()*(MAX_ARROWS-MIN_ARROWS+1));
     return rng()<.5?genLayered(num):genDistributed(num);
 }
-function genLayered(n){const arrows=[];const inner=Math.floor(n*.35);let att=0;while(arrows.length<inner&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):6+Math.floor(rng()*15);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),true);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}att=0;while(arrows.length<n&&att<MAX_GEN_ATTEMPTS){att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):8+Math.floor(rng()*20);const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),false);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows))arrows.pop()}}return arrows}
-function genDistributed(n){const arrows=[];let fails=0;const maxFails=400;while(arrows.length<n&&fails<maxFails){
-    const fillRatio=arrows.length/Math.max(1,n);
-    let tl;
-    if(fails>80){
-        tl=2+Math.floor(rng()*3); // desperate: tiny arrows to fill gaps
-    }else if(fillRatio>.6){
-        tl=2+Math.floor(rng()*5); // getting full: short-medium
-    }else{
-        // Mix of lengths — favor longer arrows early for satisfying gameplay
-        const roll=rng();
-        if(roll<.15){tl=2+Math.floor(rng()*3)}        // 15% short (2-4)
-        else if(roll<.45){tl=5+Math.floor(rng()*6)}    // 30% medium (5-10)
-        else if(roll<.75){tl=10+Math.floor(rng()*10)}   // 30% long (10-19)
-        else{tl=18+Math.floor(rng()*15)}                 // 25% extra long (18-32)
-    }
-    tl=Math.min(tl,MAX_ARROW_LENGTH);
-    const p=genArrowPath(arrows,tl,false);if(p){const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};arrows.push(a);if(!solvable(arrows)){arrows.pop();fails++;continue}fails=0}else fails++}return arrows}
-// Multi-pass solvability: try several random removal orders
-function solvable(arrows){
-    for(let attempt=0;attempt<3;attempt++){
-        let t=arrows.map(a=>({...a,path:a.path.map(p=>[...p])}));
-        let stuck=false;
-        while(t.length>0){
-            const mv=[];
-            for(let i=0;i<t.length;i++)if(canMove(i,t))mv.push(i);
-            if(!mv.length){stuck=true;break}
-            t.splice(mv[Math.floor(Math.random()*mv.length)],1);
+
+function genLayered(n){
+    const arrows=[];const inner=Math.floor(n*.35);let att=0;
+    while(arrows.length<inner&&att<MAX_GEN_ATTEMPTS){
+        att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):6+Math.floor(rng()*15);
+        const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),true);
+        if(p){
+            const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};
+            arrows.push(a);markArrow(arrows.length-1,arrows);
+            if(!solvableFast(arrows)){unmarkArrow(arrows.length-1,arrows);arrows.pop()}
         }
-        if(!stuck)return true; // found a valid order
+    }
+    att=0;
+    while(arrows.length<n&&att<MAX_GEN_ATTEMPTS){
+        att++;const len=att>MAX_GEN_ATTEMPTS/2?2+Math.floor(rng()*4):8+Math.floor(rng()*20);
+        const p=genArrowPath(arrows,Math.min(len,MAX_ARROW_LENGTH),false);
+        if(p){
+            const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};
+            arrows.push(a);markArrow(arrows.length-1,arrows);
+            if(!solvableFast(arrows)){unmarkArrow(arrows.length-1,arrows);arrows.pop()}
+        }
+    }
+    return arrows;
+}
+
+function genDistributed(n){
+    const arrows=[];let fails=0;const maxFails=400;
+    while(arrows.length<n&&fails<maxFails){
+        const fillRatio=arrows.length/Math.max(1,n);
+        let tl;
+        if(fails>80){tl=2+Math.floor(rng()*3)}
+        else if(fillRatio>.6){tl=2+Math.floor(rng()*5)}
+        else{
+            const roll=rng();
+            if(roll<.15){tl=2+Math.floor(rng()*3)}
+            else if(roll<.45){tl=5+Math.floor(rng()*6)}
+            else if(roll<.75){tl=10+Math.floor(rng()*10)}
+            else{tl=18+Math.floor(rng()*15)}
+        }
+        tl=Math.min(tl,MAX_ARROW_LENGTH);
+        const p=genArrowPath(arrows,tl,false);
+        if(p){
+            const a={id:nextArrowId++,path:p,color:'#111',isAnimating:false};
+            arrows.push(a);markArrow(arrows.length-1,arrows);
+            if(!solvableFast(arrows)){unmarkArrow(arrows.length-1,arrows);arrows.pop();fails++;continue}
+            fails=0;
+        }else fails++;
+    }
+    return arrows;
+}
+
+// Fast solvability using occupancy grid
+function solvableFast(arrows){
+    // Build temporary grid
+    const tGrid=Array(GRID_SIZE).fill(null).map(()=>new Int16Array(GRID_SIZE).fill(-1));
+    for(let i=0;i<arrows.length;i++)for(const p of arrows[i].path)tGrid[p[0]][p[1]]=i;
+
+    for(let attempt=0;attempt<3;attempt++){
+        // Copy grid
+        const g=tGrid.map(row=>new Int16Array(row));
+        const alive=new Set(arrows.map((_,i)=>i));
+        let stuck=false;
+        while(alive.size>0){
+            const mv=[];
+            for(const idx of alive){
+                const a=arrows[idx],p=a.path,l=p[p.length-1],s=p[p.length-2];
+                const dy=l[0]-s[0],dx=l[1]-s[1];
+                let cr=l[0]+dy,cc=l[1]+dx,blocked=false;
+                while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){
+                    if(g[cr][cc]!==-1&&g[cr][cc]!==idx){blocked=true;break}
+                    cr+=dy;cc+=dx;
+                }
+                if(!blocked)mv.push(idx);
+            }
+            if(!mv.length){stuck=true;break}
+            const pick=mv[Math.floor(Math.random()*mv.length)];
+            for(const p of arrows[pick].path)if(g[p[0]][p[1]]===pick)g[p[0]][p[1]]=-1;
+            alive.delete(pick);
+        }
+        if(!stuck)return true;
     }
     return false;
 }
@@ -825,17 +895,6 @@ function drawEscapePath(a,highlight){
     ctx.restore();
 }
 
-function togglePaths(){
-    showAllPaths=!showAllPaths;
-    updatePathBtn();
-    render();
-}
-function updatePathBtn(){
-    const btn=document.getElementById('pathToggleBtn');
-    if(!btn)return;
-    btn.style.background=showAllPaths?'#111':'rgba(255,255,255,.9)';
-    btn.style.color=showAllPaths?'#fff':'';
-}
 
 let lastRenderTime=Date.now();
 function render(){
@@ -1047,12 +1106,25 @@ function getDailyConfig(dateStr){
         targetArrows=260+Math.floor(p()*90);
         gridSize=38+Math.floor(p()*5)*2; // 38-46
     }
-    return{gridSize,shape,
+    const tier=tierRoll<0.25?0:tierRoll<0.55?1:tierRoll<0.80?2:3;
+    return{gridSize,shape,tier,
         minArrows:Math.round(targetArrows*.9),
         maxArrows:targetArrows,
         minLength:2,
-        maxLength:Math.floor(gridSize*2) // allow really long snaking arrows
+        maxLength:Math.floor(gridSize*2)
     };
+}
+
+const DIFF_LABELS=[
+    {text:'HARD',cls:'diff-hard'},
+    {text:'SUPER HARD',cls:'diff-super'},
+    {text:'NIGHTMARE',cls:'diff-nightmare'},
+    {text:'NIGHTMARE',cls:'diff-nightmare'}
+];
+function setDiffBadge(tier){
+    const el=document.getElementById('diffBadge');
+    const d=DIFF_LABELS[Math.min(tier,3)];
+    el.textContent=d.text;el.className='diff-badge '+d.cls;
 }
 
 function startDaily(dateStr){
@@ -1063,6 +1135,7 @@ function startDaily(dateStr){
     rng=mulberry32(dateToSeed(dateStr+'_puzzle_v5'));
     shapeGrid=genShape(dc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Daily · '+fmtDateShort(dateStr);
+    setDiffBadge(dc.tier);
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
@@ -1070,20 +1143,50 @@ function startDaily(dateStr){
 // ================================================================
 //  LEVEL SYSTEM  (200 levels, deterministic, progressive)
 // ================================================================
-const TOTAL_LEVELS=200;
+const TOTAL_LEVELS=500;
+
+// Levels 1-10: curated intro sequence (alternating Hard & Super Hard)
+const INTRO_LEVELS=[
+    {tier:0,arrows:60,grid:20,shape:'none'},       // 1: Hard, rectangle
+    {tier:0,arrows:70,grid:22,shape:'circle'},      // 2: Hard, circle
+    {tier:0,arrows:65,grid:20,shape:'diamond'},     // 3: Hard, diamond
+    {tier:1,arrows:100,grid:26,shape:'none'},       // 4: Super Hard, rectangle
+    {tier:0,arrows:75,grid:22,shape:'heart'},       // 5: Hard, heart
+    {tier:1,arrows:110,grid:28,shape:'star'},       // 6: Super Hard, star
+    {tier:1,arrows:120,grid:28,shape:'hexagon'},    // 7: Super Hard, hexagon
+    {tier:0,arrows:80,grid:24,shape:'cross'},       // 8: Hard, cross
+    {tier:1,arrows:130,grid:30,shape:'ring'},       // 9: Super Hard, ring
+    {tier:1,arrows:140,grid:30,shape:'crescent'},   // 10: Super Hard, crescent
+];
 
 function getLevelConfig(n){
-    const t=n/TOTAL_LEVELS; // 0..1
-    const seed=dateToSeed('level_'+n+'_v6');const p=mulberry32(seed);
-    // Grid size: start at 20, scale to 46
-    const gridSize=Math.round(20+t*26);
-    // Arrow count: start at 60, scale up aggressively
-    const baseArrows=60+Math.round(t*290); // 60 → 350
-    const arrows=baseArrows+Math.floor(p()*Math.round(baseArrows*.15));
-    // Shape: first 5 levels are rectangle, then mix in shapes
-    let shape='none';
-    if(n>5)shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
-    return{gridSize,shape,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(arrows*.9)),maxArrows:arrows,minLength:2,maxLength:Math.floor(gridSize*2)};
+    // Levels 1-10: curated
+    if(n<=INTRO_LEVELS.length){
+        const il=INTRO_LEVELS[n-1];
+        return{gridSize:il.grid,shape:il.shape,tier:il.tier,
+            minArrows:Math.round(il.arrows*.9),maxArrows:il.arrows,
+            minLength:2,maxLength:Math.floor(il.grid*2)};
+    }
+    // Levels 11+: random difficulty
+    const seed=dateToSeed('level_'+n+'_v7');const p=mulberry32(seed);
+    const shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
+    const tierRoll=p();
+    let targetArrows,gridSize;
+    if(tierRoll<0.25){
+        targetArrows=60+Math.floor(p()*30);
+        gridSize=20+Math.floor(p()*4)*2;
+    }else if(tierRoll<0.55){
+        targetArrows=100+Math.floor(p()*60);
+        gridSize=26+Math.floor(p()*4)*2;
+    }else if(tierRoll<0.80){
+        targetArrows=170+Math.floor(p()*80);
+        gridSize=32+Math.floor(p()*5)*2;
+    }else{
+        targetArrows=260+Math.floor(p()*90);
+        gridSize=38+Math.floor(p()*5)*2;
+    }
+    const tier=tierRoll<0.25?0:tierRoll<0.55?1:2;
+    return{gridSize,shape,tier,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(targetArrows*.9)),maxArrows:targetArrows,minLength:2,maxLength:Math.floor(gridSize*2)};
 }
 
 function startLevel(n){
@@ -1094,6 +1197,7 @@ function startLevel(n){
     rng=mulberry32(dateToSeed('level_'+n+'_puzzle_v5'));
     shapeGrid=genShape(lc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Level '+n;
+    setDiffBadge(lc.tier);
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
@@ -1106,6 +1210,7 @@ function startFreePlay(){
     const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
     shapeGrid=genShape(shape,GRID_SIZE);
     document.getElementById('gameTitle').textContent='Free Play';
+    setDiffBadge(1);
     showScreen('gameScreen');
     resizeCanvas();testArrows=genPuzzle();render();startTimer();
 }
