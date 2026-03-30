@@ -1024,7 +1024,7 @@ const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','r
 //  DAILY CHALLENGE
 // ================================================================
 function getDailyConfig(dateStr){
-    const seed=dateToSeed(dateStr+'_v6');const p=mulberry32(seed);
+    const seed=dateToSeed(dateStr+'_v7');const p=mulberry32(seed);
     const shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
     // Wide variety: some days are quick (40 arrows), some are marathon (150+)
     // Pick a target arrow count first, then size the grid to fit
@@ -1060,7 +1060,7 @@ function startDaily(dateStr){
     resetState();
     const dc=getDailyConfig(dateStr);
     GRID_SIZE=dc.gridSize;MIN_ARROWS=dc.minArrows;MAX_ARROWS=dc.maxArrows;MIN_ARROW_LENGTH=dc.minLength;MAX_ARROW_LENGTH=dc.maxLength;
-    rng=mulberry32(dateToSeed(dateStr+'_puzzle_v4'));
+    rng=mulberry32(dateToSeed(dateStr+'_puzzle_v5'));
     shapeGrid=genShape(dc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Daily · '+fmtDateShort(dateStr);
     showScreen('gameScreen');
@@ -1074,7 +1074,7 @@ const TOTAL_LEVELS=200;
 
 function getLevelConfig(n){
     const t=n/TOTAL_LEVELS; // 0..1
-    const seed=dateToSeed('level_'+n+'_v5');const p=mulberry32(seed);
+    const seed=dateToSeed('level_'+n+'_v6');const p=mulberry32(seed);
     // Grid size: start at 20, scale to 46
     const gridSize=Math.round(20+t*26);
     // Arrow count: start at 60, scale up aggressively
@@ -1091,7 +1091,7 @@ function startLevel(n){
     resetState();
     const lc=getLevelConfig(n);
     GRID_SIZE=lc.gridSize;MIN_ARROWS=lc.minArrows;MAX_ARROWS=lc.maxArrows;MIN_ARROW_LENGTH=lc.minLength;MAX_ARROW_LENGTH=lc.maxLength;
-    rng=mulberry32(dateToSeed('level_'+n+'_puzzle_v4'));
+    rng=mulberry32(dateToSeed('level_'+n+'_puzzle_v5'));
     shapeGrid=genShape(lc.shape,GRID_SIZE,rng);
     document.getElementById('gameTitle').textContent='Level '+n;
     showScreen('gameScreen');
