@@ -273,7 +273,13 @@ function zoomIn(){zoomAt(canvas.width/2,canvas.height/2,1.3)}
 function zoomOut(){zoomAt(canvas.width/2,canvas.height/2,1/1.3)}
 function zoomReset(){viewScale=1;viewX=0;viewY=0;render()}
 function zoomAt(cx,cy,f){const ns=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,viewScale*f));const rf=ns/viewScale;viewX=cx-rf*(cx-viewX);viewY=cy-rf*(cy-viewY);viewScale=ns;clampPan();render()}
-function clampPan(){const w=canvas.width,h=canvas.height;viewX=Math.min(0,Math.max(w-w*viewScale,viewX));viewY=Math.min(0,Math.max(h-h*viewScale,viewY))}
+function clampPan(){
+    const w=canvas.width,h=canvas.height;
+    // Allow dragging up to 30% past each edge so users can bring edge arrows into view
+    const pad=w*0.3;
+    viewX=Math.min(pad,Math.max(w-w*viewScale-pad,viewX));
+    viewY=Math.min(pad,Math.max(h-h*viewScale-pad,viewY));
+}
 function screenToCanvas(cx,cy){const r=canvas.getBoundingClientRect();const rx=canvas.width/r.width,ry=canvas.height/r.height;return{x:((cx-r.left)*rx-viewX)/viewScale,y:((cy-r.top)*ry-viewY)/viewScale}}
 
 // Wheel zoom
@@ -320,7 +326,7 @@ let isDragging=false,dragStartX=0,dragStartY=0,dragViewX=0,dragViewY=0,dragMoved
 canvas.addEventListener('mousedown',e=>{
     dragMoved=false;
     startHold(e.clientX,e.clientY);
-    if(viewScale>1){isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;dragViewX=viewX;dragViewY=viewY;canvas.classList.add('grabbing')}
+    isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;dragViewX=viewX;dragViewY=viewY;canvas.classList.add('grabbing');
 });
 window.addEventListener('mousemove',e=>{
     if(!isDragging&&!holdFired)return;
@@ -382,7 +388,7 @@ canvas.addEventListener('touchmove',e=>{
         if(movedX>TOUCH_DRAG_THRESHOLD||movedY>TOUCH_DRAG_THRESHOLD){
             touchDragMoved=true;cancelHold();
         }
-        if(viewScale>1&&lastTouchCenter){
+        if(touchDragMoved&&lastTouchCenter){
             const r=canvas.getBoundingClientRect();
             viewX=dragViewX+(nt[0].clientX-touchStartX)*(canvas.width/r.width);
             viewY=dragViewY+(nt[0].clientY-touchStartY)*(canvas.height/r.height);
@@ -1078,6 +1084,13 @@ function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArr
     document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0;lastTapTime=0}
 
 const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
+// Approximate fill ratios for shapes — used to scale grid size so arrows fit
+function shapeSizeMultiplier(name){
+    const fill={none:1,circle:.78,diamond:.5,heart:.45,star:.45,cross:.35,
+        triangle:.4,ring:.55,hexagon:.75,lshape:.55,crescent:.35,blob:.45,swiss:.7};
+    const f=fill[name]||1;
+    return f<1?1/Math.sqrt(f):1; // scale grid by 1/sqrt(fill) to compensate
+}
 
 // ================================================================
 //  DAILY CHALLENGE
@@ -1088,24 +1101,22 @@ function getDailyConfig(dateStr){
     // Wide variety: some days are quick (40 arrows), some are marathon (150+)
     // Pick a target arrow count first, then size the grid to fit
     const tierRoll=p();
-    let targetArrows,gridSize;
+    let targetArrows,baseGrid;
     if(tierRoll<0.25){
-        // Light day: 60-90 arrows
         targetArrows=60+Math.floor(p()*30);
-        gridSize=20+Math.floor(p()*4)*2; // 20-26
+        baseGrid=20+Math.floor(p()*4)*2;
     }else if(tierRoll<0.55){
-        // Medium day: 100-160 arrows
         targetArrows=100+Math.floor(p()*60);
-        gridSize=26+Math.floor(p()*4)*2; // 26-32
+        baseGrid=26+Math.floor(p()*4)*2;
     }else if(tierRoll<0.80){
-        // Big day: 170-250 arrows
         targetArrows=170+Math.floor(p()*80);
-        gridSize=32+Math.floor(p()*5)*2; // 32-40
+        baseGrid=32+Math.floor(p()*5)*2;
     }else{
-        // Marathon day: 260-350 arrows
         targetArrows=260+Math.floor(p()*90);
-        gridSize=38+Math.floor(p()*5)*2; // 38-46
+        baseGrid=38+Math.floor(p()*5)*2;
     }
+    // Shapes with less area need a bigger grid to fit the same arrow count
+    const gridSize=Math.round(baseGrid*shapeSizeMultiplier(shape));
     const tier=tierRoll<0.25?0:tierRoll<0.55?1:tierRoll<0.80?2:3;
     return{gridSize,shape,tier,
         minArrows:Math.round(targetArrows*.9),
@@ -1171,20 +1182,21 @@ function getLevelConfig(n){
     const seed=dateToSeed('level_'+n+'_v7');const p=mulberry32(seed);
     const shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
     const tierRoll=p();
-    let targetArrows,gridSize;
+    let targetArrows,baseGrid;
     if(tierRoll<0.25){
         targetArrows=60+Math.floor(p()*30);
-        gridSize=20+Math.floor(p()*4)*2;
+        baseGrid=20+Math.floor(p()*4)*2;
     }else if(tierRoll<0.55){
         targetArrows=100+Math.floor(p()*60);
-        gridSize=26+Math.floor(p()*4)*2;
+        baseGrid=26+Math.floor(p()*4)*2;
     }else if(tierRoll<0.80){
         targetArrows=170+Math.floor(p()*80);
-        gridSize=32+Math.floor(p()*5)*2;
+        baseGrid=32+Math.floor(p()*5)*2;
     }else{
         targetArrows=260+Math.floor(p()*90);
-        gridSize=38+Math.floor(p()*5)*2;
+        baseGrid=38+Math.floor(p()*5)*2;
     }
+    const gridSize=Math.round(baseGrid*shapeSizeMultiplier(shape));
     const tier=tierRoll<0.25?0:tierRoll<0.55?1:2;
     return{gridSize,shape,tier,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(targetArrows*.9)),maxArrows:targetArrows,minLength:2,maxLength:Math.floor(gridSize*2)};
 }
