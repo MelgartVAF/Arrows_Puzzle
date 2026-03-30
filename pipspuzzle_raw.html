@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrows Puzzle Escape Online - Free Logic Game | Pips Puzzle</title>
+    <meta name="description" content="Play Arrows Puzzle Escape Online - A challenging logic game from Pips where you strategically remove interweaving arrows. Play free with multiple difficulty levels. Part of the Pips Archive collection.">
+    <meta name="keywords" content="arrows puzzle escape, arrows puzzle escape online, arrows escape, pips, pips puzzle, pips archive, logic puzzle, brain game, arrow puzzle, free online game, puzzle solving">
+    <meta name="author" content="Pips Puzzle Game">
+    <link rel="canonical" href="https://pipspuzzle.com/arrowsescape">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo/arrowsescape_logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo/arrowsescape_logo.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="game">
+    <meta property="og:url" content="https://pipspuzzle.com/arrowsescape/">
+    <meta property="og:title" content="Arrows Puzzle Escape Online - Free Logic Game | Pips">
+    <meta property="og:description" content="Challenge your mind with Arrows Puzzle Escape - remove all arrows by strategically clicking unblocked ones. Part of Pips Puzzle collection!">
+    <meta property="og:image" content="https://pipspuzzle.com/arrowsescape/logo/arrowsescape_logo.png">
+    <meta property="og:site_name" content="Pips Puzzle Game">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://pipspuzzle.com/arrowsescape/">
+    <meta property="twitter:title" content="Arrows Puzzle Escape Online - Free Logic Game | Pips">
+    <meta property="twitter:description" content="Challenge your mind with Arrows Puzzle Escape - remove all arrows by strategically clicking unblocked ones.">
+    <meta property="twitter:image" content="https://pipspuzzle.com/arrowsescape/logo/arrowsescape_logo.png">
+
+    <!-- Game-specific meta -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#2a2a2a">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5120823394918772"
+         crossorigin="anonymous"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V3JQWYYRTP"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-V3JQWYYRTP');
+    </script>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "Arrows Puzzle Escape",
+        "description": "Play Arrows Puzzle Escape Online - A challenging logic game where you remove interweaving arrows by clicking on unblocked ones. Features multiple difficulty levels, shapes, and guaranteed solvable puzzles. Part of Pips Puzzle collection.",
+        "url": "https://pipspuzzle.com/arrowsescape/",
+        "image": "https://pipspuzzle.com/arrowsescape/logo/arrowsescape_logo.png",
+        "publisher": {
+            "@type": "Organization",
+            "name": "Pips Puzzle Game",
+            "url": "https://pipspuzzle.com"
+        },
+        "genre": ["Puzzle", "Logic", "Brain Game"],
+        "gamePlatform": ["Web Browser", "Mobile Web"],
+        "numberOfPlayers": "1",
+        "playMode": "SinglePlayer",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+
+    <!-- Theme System -->
+    <link rel="stylesheet" href="/css/themes.css?v=2025.28">
+    <!-- Minimal Header CSS -->
+    <link rel="stylesheet" href="/css/minimal-header.css?v=1.1.4">
+    <!-- Shared Footer CSS -->
+    <link rel="stylesheet" href="/css/shared-footer.css">
+    <!-- Email Auth CSS -->
+    <link rel="stylesheet" href="/css/email-auth.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #1a1a1a !important;
+            font-family: Arial, sans-serif;
+        }
+
+        html {
+            background-color: #1a1a1a !important;
+        }
+
+        .game-container {
+            background-color: #1a1a1a !important;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin: 100px auto 40px auto;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #gameCanvas {
+            border: 2px solid #444;
+            background-color: #1a1a1a;
+            display: block;
+            cursor: pointer;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 0 10px;
+        }
+
+        .controls button {
+            flex: 0 1 auto;
+            min-width: 140px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            background-color: #3d8b40;
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Primary action button */
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+        }
+
+        /* Theme button */
+        .btn-theme {
+            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+        }
+
+        .btn-theme:hover {
+            background: linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);
+        }
+
+        /* Timer button */
+        .btn-timer {
+            background: linear-gradient(135deg, #666 0%, #555 100%);
+        }
+
+        .btn-timer:hover {
+            background: linear-gradient(135deg, #777 0%, #666 100%);
+        }
+
+        .btn-timer.enabled {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        .btn-timer.enabled:hover {
+            background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
+        }
+
+        /* Hint button */
+        .btn-hint {
+            background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+        }
+
+        .btn-hint:hover {
+            background: linear-gradient(135deg, #FB8C00 0%, #F57C00 100%);
+        }
+
+        .btn-hint.no-moves {
+            background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+        }
+
+        select {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            padding-right: 36px;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            appearance: none;
+            background-image:
+                linear-gradient(135deg, #4CAF50 0%, #45a049 100%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat, no-repeat;
+            background-position: center, right 12px center;
+        }
+
+        select:hover {
+            background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+            background-image:
+                linear-gradient(135deg, #45a049 0%, #3d8b40 100%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat, no-repeat;
+            background-position: center, right 12px center;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        select:focus {
+            outline: 2px solid #4CAF50;
+            outline-offset: 2px;
+        }
+
+        select option {
+            background-color: #2a2a2a;
+            color: white;
+            padding: 10px;
+        }
+
+        .selector-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .selector-group label {
+            font-size: 14px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .lives-display {
+            display: flex;
+            gap: 5px;
+            font-size: 24px;
+        }
+
+        .timer-display {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .timer-display.warning {
+            color: #FFA500;
+        }
+
+        .timer-display.critical {
+            color: #FF0000;
+        }
+
+        .timer-display.disabled {
+            color: #888;
+        }
+
+        /* How-to Instructions Button */
+        .how-to-btn {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .how-to-btn:hover {
+            background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .how-to-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* How-to Modal */
+        .how-to-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .how-to-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .how-to-content {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            margin: 20px;
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease;
+        }
+
+        .how-to-content h2 {
+            color: #FFA726;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .how-to-content h3 {
+            color: #4CAF50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .how-to-content p, .how-to-content li {
+            line-height: 1.6;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        .how-to-content ul, .how-to-content ol {
+            margin-left: 20px;
+        }
+
+        .how-to-content strong {
+            color: #4CAF50;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+            margin-top: -10px;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design for Mobile */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 15px;
+                max-width: 100%;
+                margin: 80px 10px 40px 10px;
+            }
+
+            .title {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            .game-stats {
+                padding: 8px 10px;
+                margin-bottom: 10px;
+            }
+
+            .lives-display {
+                font-size: 20px;
+                gap: 3px;
+            }
+
+            .timer-display {
+                font-size: 16px;
+            }
+
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .controls {
+                gap: 8px;
+            }
+
+            .controls button {
+                width: 100%;
+                max-width: 300px;
+                min-width: auto;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            select {
+                padding: 10px 16px;
+                padding-right: 32px;
+                font-size: 14px;
+                margin: 3px;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+            }
+
+            .selector-group {
+                flex-direction: column;
+                gap: 5px;
+                margin-top: 5px;
+            }
+
+            .selector-group label {
+                font-size: 12px;
+            }
+
+            .how-to-btn {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .how-to-content {
+                padding: 20px;
+                max-width: 90%;
+            }
+
+            .how-to-content h2 {
+                font-size: 22px;
+            }
+
+            .how-to-content h3 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                margin: 70px 5px 40px 5px;
+            }
+
+            .title {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .game-stats {
+                padding: 6px 8px;
+            }
+
+            .lives-display {
+                font-size: 18px;
+            }
+
+            .timer-display {
+                font-size: 14px;
+            }
+
+            .controls button {
+                max-width: 100%;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            select {
+                padding: 8px 12px;
+                padding-right: 28px;
+                font-size: 12px;
+                max-width: 100%;
+            }
+
+            .how-to-btn {
+                font-size: 12px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- How-to Modal -->
+    <div id="howToModal" class="how-to-modal" onclick="closeHowToOnBackdrop(event)">
+        <div class="how-to-content">
+            <span class="close-modal" onclick="toggleHowTo()">&times;</span>
+            <h2>💡 How to Play Arrows Puzzle Escape</h2>
+
+            <h3>🎯 Objective</h3>
+            <p>Remove all arrows from the grid by clicking on them in the correct order. Each arrow can only move in the direction it's pointing!</p>
+
+            <h3>📝 Game Rules</h3>
+            <ol>
+                <li><strong>Click an Arrow:</strong> Click on any arrow to attempt to move it.</li>
+                <li><strong>Path Must Be Clear:</strong> The arrow can only escape if its path in the direction it's pointing is completely clear of other arrows.</li>
+                <li><strong>Strategy is Key:</strong> You must remove arrows in the correct sequence. Some arrows block others!</li>
+                <li><strong>Lives System:</strong> Clicking a blocked arrow costs you a life. Run out of lives and it's game over!</li>
+                <li><strong>Beat the Timer:</strong> Complete the puzzle before time runs out (can be disabled).</li>
+            </ol>
+
+            <h3>🎮 Controls & Settings</h3>
+            <ul>
+                <li><strong>Difficulty:</strong> Choose Easy (10x10), Medium (16x16), or Hard (20x20) grid sizes</li>
+                <li><strong>Shape Modes:</strong> Play on different shaped grids - Heart, Star, Circle, Diamond, or standard rectangle</li>
+                <li><strong>Theme Toggle:</strong> Switch between Colorful and Classic themes</li>
+                <li><strong>Timer:</strong> Enable or disable the countdown timer</li>
+                <li><strong>💡 Hint:</strong> Click the Hint button or press 'H' to highlight a movable arrow (lasts 5 seconds)</li>
+            </ul>
+
+            <h3>💡 Pro Tips</h3>
+            <ul>
+                <li>Look for arrows at the edges first - they're often easiest to remove</li>
+                <li>Trace each arrow's path to see what it blocks</li>
+                <li>Work backwards: find arrows that aren't blocking anything</li>
+                <li>Stuck? Use the Hint button (or press 'H') to get help finding your next move!</li>
+                <li>Take your time! Every puzzle is guaranteed to be solvable</li>
+            </ul>
+
+            <h3>🏆 Win Condition</h3>
+            <p>Remove all arrows from the grid before time runs out and without losing all your lives. Good luck!</p>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="how-to-modal" onclick="closeShareOnBackdrop(event)">
+        <div class="how-to-content" style="max-width: 500px;">
+            <span class="close-modal" onclick="toggleShare()">&times;</span>
+            <h2>🎉 Share Your Victory!</h2>
+
+            <div id="shareStats" style="background-color: #1a1a1a; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <p style="font-size: 18px; margin: 10px 0;"><strong>⏱️ Time:</strong> <span id="shareTime">--:--</span></p>
+                <p style="font-size: 18px; margin: 10px 0;"><strong>⭐ Score:</strong> <span id="shareScore">0</span></p>
+                <p style="font-size: 16px; margin: 10px 0;"><strong>💪 Lives:</strong> <span id="shareLives">0</span></p>
+                <p style="font-size: 16px; margin: 10px 0;"><strong>📊 Difficulty:</strong> <span id="shareDifficulty">Medium</span></p>
+            </div>
+
+            <h3 style="color: #4CAF50; margin-top: 20px;">Share on Social Media</h3>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button onclick="shareToTwitter()" style="background-color: #1DA1F2; color: white; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>𝕏</span> Share on X (Twitter)
+                </button>
+
+                <button onclick="shareToFacebook()" style="background-color: #1877F2; color: white; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>📘</span> Share on Facebook
+                </button>
+
+                <button onclick="shareToLinkedIn()" style="background-color: #0A66C2; color: white; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>💼</span> Share on LinkedIn
+                </button>
+
+                <button onclick="copyShareLink()" style="background-color: #666; color: white; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>🔗</span> Copy Link
+                </button>
+            </div>
+
+            <p style="margin-top: 20px; color: #888; font-size: 14px; text-align: center;">
+                Challenge your friends to beat your score!
+            </p>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="title">Arrows Puzzle Escape</div>
+        <div class="game-stats">
+            <div class="lives-display" id="livesDisplay"></div>
+            <div class="timer-display" id="timerDisplay">⏱️ --:--</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <button onclick="regeneratePuzzle()" class="btn-primary">🔄 New Puzzle</button>
+            <button onclick="toggleTheme()" class="btn-theme">🎨 Theme</button>
+            <button onclick="toggleTimer()" id="timerToggleBtn" class="btn-timer">⏱️ Timer: OFF</button>
+            <button onclick="showHint()" id="hintBtn" class="btn-hint">💡 Hint</button>
+        </div>
+        <div class="selector-group">
+            <label for="difficultySelect">Difficulty:</label>
+            <select id="difficultySelect" onchange="changeDifficulty(this.value)">
+                <option value="easy">Easy - 10x10 (90s)</option>
+                <option value="medium" selected>Medium - 16x16 (90s)</option>
+                <option value="hard">Hard - 20x20 (120s)</option>
+            </select>
+        </div>
+        <div class="selector-group">
+            <label for="shapeSelect">Shape:</label>
+            <select id="shapeSelect" onchange="changeShape(this.value)">
+                <option value="none" selected>None</option>
+                <option value="heart">❤️ Heart</option>
+                <option value="star">⭐ Star</option>
+                <option value="circle">⭕ Circle</option>
+                <option value="diamond">💎 Diamond</option>
+            </select>
+        </div>
+        <button class="how-to-btn" onclick="toggleHowTo()">💡 How to Play</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Make canvas responsive
+        function resizeCanvas() {
+            const container = document.querySelector('.game-container');
+            const maxWidth = Math.min(500, container.clientWidth - 60); // 60px for padding
+            canvas.width = maxWidth;
+            canvas.height = maxWidth;
+
+            // Update CELL_SIZE based on new canvas size
+            CELL_SIZE = canvas.width / GRID_SIZE;
+
+            // Re-render if game is already initialized
+            if (testArrows && testArrows.length > 0) {
+                render();
+            }
+        }
+
+        // Listen for window resize
+        window.addEventListener('resize', resizeCanvas);
+
+        // Difficulty system - MUST BE DEFINED FIRST
+        let currentDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        
+        const difficulties = {
+            easy: {
+                gridSize: 10,
+                minArrows: 15,  // Increased from 8
+                maxArrows: 20,  // Increased from 12
+                minLength: 4,
+                maxLength: 15,  // Increased from 10
+                timeLimit: 90, // 90 seconds
+                lives: 5
+            },
+            medium: {
+                gridSize: 16,
+                minArrows: 40,  // Increased from 20
+                maxArrows: 50,  // Increased from 28
+                minLength: 5,
+                maxLength: 25,  // Increased from 18
+                timeLimit: 90, // 90 seconds
+                lives: 3
+            },
+            hard: {
+                gridSize: 20,
+                minArrows: 70,  // Increased from 35
+                maxArrows: 85,  // Increased from 45
+                minLength: 8,
+                maxLength: 35,  // Increased from 25
+                timeLimit: 120, // 120 seconds
+                lives: 2
+            }
+        };
+
+        // Game configuration (updated based on difficulty)
+        let GRID_SIZE = difficulties[currentDifficulty].gridSize;
+        let CELL_SIZE = canvas.width / GRID_SIZE;
+        const DOT_RADIUS = 3;
+        const LINE_WIDTH = 4; // Thinner line for smaller arrows
+        const ARROW_HEAD_SIZE = 22; // Slightly larger for better proportion
+
+        // Puzzle generation parameters (updated based on difficulty)
+        let MIN_ARROWS = difficulties[currentDifficulty].minArrows;
+        let MAX_ARROWS = difficulties[currentDifficulty].maxArrows;
+        let MIN_ARROW_LENGTH = difficulties[currentDifficulty].minLength;
+        let MAX_ARROW_LENGTH = difficulties[currentDifficulty].maxLength;
+        const MAX_GENERATION_ATTEMPTS = 800; // Increased for denser grids
+
+        let testArrows = [];
+
+        // Animation tracking system for simultaneous animations
+        const activeAnimations = new Map(); // arrowId -> animation state
+        let nextArrowId = 0;
+        let animationFrameId = null;
+        const ANIMATION_DURATION = 3000; // 3 seconds (reduced from 15s)
+
+        // Lives system (updated based on difficulty)
+        let lives = difficulties[currentDifficulty].lives;
+        let maxLives = difficulties[currentDifficulty].lives;
+        let gameOver = false;
+        
+        // Timer system (updated based on difficulty)
+        let timeLimit = difficulties[currentDifficulty].timeLimit;
+        let timeRemaining = timeLimit;
+        let timerInterval = null;
+        let gameStartTime = null;
+        let timerEnabled = false; // Toggle for timer on/off (disabled by default)
+        
+        // Shape mode system
+        let shapeMode = 'none'; // 'none', 'heart', 'star', 'circle', 'diamond'
+        let shapeGrid = null; // 2D boolean array for current shape
+
+        // Hint system
+        let hintedArrowId = null; // ID of currently hinted arrow
+        let hintTimeout = null; // Timeout to clear hint
+        
+        // Generate shape grid based on shape mode and grid size
+        function generateShapeGrid(shapeName, gridSize) {
+            const grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
+            const centerX = Math.floor(gridSize / 2);
+            const centerY = Math.floor(gridSize / 2);
+            
+            if (shapeName === 'none') {
+                // All points allowed
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        grid[i][j] = true;
+                    }
+                }
+            } else if (shapeName === 'heart') {
+                // Draw a heart using grid points
+                const size = gridSize * 0.4;
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        // Normalize coordinates to -1 to 1
+                        const x = ((j - centerX) / size);
+                        // Flip y coordinate to make heart right-side up
+                        const y = (-(i - centerY) / size) - 0.3;
+
+                        // Heart equation (modified for grid)
+                        const eq = Math.pow(x*x + y*y - 1, 3) - x*x * y*y*y;
+                        grid[i][j] = eq <= 0.1;
+                    }
+                }
+            } else if (shapeName === 'star') {
+                // Draw a 5-pointed star
+                const outerRadius = gridSize * 0.4;
+                const innerRadius = gridSize * 0.2;
+                
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = j - centerX;
+                        const y = i - centerY;
+                        const angle = Math.atan2(y, x) + Math.PI/2; // Start from top
+                        const dist = Math.sqrt(x*x + y*y);
+                        
+                        // 5-pointed star using angle
+                        const pointAngle = (Math.PI * 2) / 5;
+                        const modAngle = ((angle % pointAngle) + pointAngle) % pointAngle;
+                        
+                        // Alternate between outer and inner radius
+                        const threshold = modAngle < pointAngle/2 ? 
+                            innerRadius + (outerRadius - innerRadius) * (2 * modAngle / pointAngle) :
+                            outerRadius - (outerRadius - innerRadius) * (2 * (modAngle - pointAngle/2) / pointAngle);
+                        
+                        grid[i][j] = dist <= threshold;
+                    }
+                }
+            } else if (shapeName === 'circle') {
+                // Simple circle
+                const radius = gridSize * 0.4;
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = j - centerX;
+                        const y = i - centerY;
+                        const dist = Math.sqrt(x*x + y*y);
+                        grid[i][j] = dist <= radius;
+                    }
+                }
+            } else if (shapeName === 'diamond') {
+                // Diamond shape (square rotated 45 degrees)
+                const size = gridSize * 0.5;
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = Math.abs(j - centerX);
+                        const y = Math.abs(i - centerY);
+                        grid[i][j] = (x + y) <= size;
+                    }
+                }
+            }
+            
+            return grid;
+        }
+        
+        // Check if point is inside the current shape
+        function isPointInShape(row, col) {
+            if (!shapeGrid) return true;
+            if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) return false;
+            return shapeGrid[row][col];
+        }
+        
+        const themes = {
+            colorful: {
+                background: '#1a1a1a',
+                arrowColors: [
+                    '#E53935', '#1E88E5', '#43A047', '#FB8C00',
+                    '#8E24AA', '#00ACC1', '#FDD835', '#D81B60',
+                    '#00897B', '#FFA726'
+                ],
+                heartColor: '#FF0000',
+                emptyHeartColor: '#333',
+                timerColor: '#FFF',
+                timerWarning: '#FFA500',
+                timerCritical: '#FF0000'
+            },
+            classic: {
+                background: '#FFFFFF',
+                arrowColors: [
+                    '#000000', '#000000', '#000000', '#000000',
+                    '#000000', '#000000', '#000000', '#000000',
+                    '#000000', '#000000'
+                ],
+                heartColor: '#000000',
+                emptyHeartColor: '#CCC',
+                timerColor: '#000',
+                timerWarning: '#555',
+                timerCritical: '#000'
+            }
+        };
+
+        // Current theme selection
+        let currentTheme = 'colorful';
+
+        // Arrow directions: [dx, dy] where dx is column change, dy is row change
+        const DIRECTIONS = {
+            RIGHT: [1, 0],
+            LEFT: [-1, 0],
+            DOWN: [0, 1],
+            UP: [0, -1]
+        };
+
+        // Unicode arrows for each direction
+        const ARROW_SYMBOLS = {
+            RIGHT: '→',
+            LEFT: '←',
+            DOWN: '↓',
+            UP: '↑'
+        };
+
+        // Check if a point is already used by any arrow
+        function isPointUsed(row, col, arrows) {
+            for (let arrow of arrows) {
+                for (let point of arrow.path) {
+                    if (point[0] === row && point[1] === col) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Get valid adjacent points (1 step away: up/down/left/right)
+        function getAdjacentPoints(row, col) {
+            const adjacent = [];
+            const directions = [
+                [-1, 0], // up
+                [1, 0],  // down
+                [0, -1], // left
+                [0, 1]   // right
+            ];
+            
+            for (let [dr, dc] of directions) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                if (newRow >= 0 && newRow < GRID_SIZE && 
+                    newCol >= 0 && newCol < GRID_SIZE &&
+                    isPointInShape(newRow, newCol)) { // Check shape boundary
+                    adjacent.push([newRow, newCol]);
+                }
+            }
+            return adjacent;
+        }
+
+        // Generate a random arrow path with interweaving behavior
+        // CRITICAL: Ensure arrow never blocks itself!
+        function generateArrowPath(existingArrows, targetLength, preferCenter = false) {
+            const attempts = 100;
+            
+            for (let attempt = 0; attempt < attempts; attempt++) {
+                let startRow, startCol;
+                
+                if (preferCenter) {
+                    // Start near center for inner layer arrows
+                    const centerRow = Math.floor(GRID_SIZE / 2);
+                    const centerCol = Math.floor(GRID_SIZE / 2);
+                    const offset = Math.floor(GRID_SIZE / 4);
+                    startRow = centerRow + Math.floor(Math.random() * offset * 2) - offset;
+                    startCol = centerCol + Math.floor(Math.random() * offset * 2) - offset;
+                    startRow = Math.max(0, Math.min(GRID_SIZE - 1, startRow));
+                    startCol = Math.max(0, Math.min(GRID_SIZE - 1, startCol));
+                } else {
+                    // Pick random starting point
+                    startRow = Math.floor(Math.random() * GRID_SIZE);
+                    startCol = Math.floor(Math.random() * GRID_SIZE);
+                }
+                
+                // Check if point is in shape and not used
+                if (isPointUsed(startRow, startCol, existingArrows) || !isPointInShape(startRow, startCol)) {
+                    continue;
+                }
+                
+                // Try to grow the arrow
+                const path = [[startRow, startCol]];
+                let currentRow = startRow;
+                let currentCol = startCol;
+                let lastDirection = null;
+                
+                while (path.length < targetLength) {
+                    const adjacent = getAdjacentPoints(currentRow, currentCol);
+                    const available = adjacent.filter(([r, c]) => 
+                        !isPointUsed(r, c, existingArrows) && 
+                        !path.some(([pr, pc]) => pr === r && pc === c)
+                    );
+                    
+                    if (available.length === 0) {
+                        break; // Dead end
+                    }
+                    
+                    // Score each available point
+                    const scored = available.map(([r, c]) => {
+                        let score = Math.random(); // Base randomness
+                        
+                        // OPTION A: Bias toward changing direction (more winding)
+                        if (lastDirection) {
+                            const currentDir = `${r - currentRow},${c - currentCol}`;
+                            if (currentDir !== lastDirection) {
+                                score += 1.5; // Strong preference for turning
+                            }
+                        }
+                        
+                        // OPTION B: Attract to existing arrows (more interweaving)
+                        // Check if this point is near (but not touching) other arrows
+                        const nearbyPoints = getAdjacentPoints(r, c);
+                        const hasNearbyArrow = nearbyPoints.some(([nr, nc]) => 
+                            isPointUsed(nr, nc, existingArrows)
+                        );
+                        if (hasNearbyArrow) {
+                            score += 1.0; // Prefer points near existing arrows
+                        }
+                        
+                        return { point: [r, c], score };
+                    });
+                    
+                    // Sort by score and pick from top choices (with some randomness)
+                    scored.sort((a, b) => b.score - a.score);
+                    const topChoices = scored.slice(0, Math.max(1, Math.ceil(scored.length * 0.4)));
+                    const chosen = topChoices[Math.floor(Math.random() * topChoices.length)];
+                    
+                    const [nextRow, nextCol] = chosen.point;
+                    path.push([nextRow, nextCol]);
+                    
+                    // Update direction tracking
+                    lastDirection = `${nextRow - currentRow},${nextCol - currentCol}`;
+                    currentRow = nextRow;
+                    currentCol = nextCol;
+                }
+                
+                // Accept if we got at least 2 points AND arrow doesn't block itself
+                if (path.length >= 2) {
+                    // Check if arrow would block itself
+                    if (!doesArrowBlockItself(path)) {
+                        return path;
+                    }
+                    // Otherwise, try again
+                }
+            }
+            
+            return null; // Failed to generate
+        }
+
+        // Check if an arrow's head would collide with its own body when moving
+        function doesArrowBlockItself(path) {
+            if (path.length < 2) return false;
+            
+            // Get the direction the arrow is pointing
+            const lastPoint = path[path.length - 1];
+            const secondLastPoint = path[path.length - 2];
+            const dx = lastPoint[1] - secondLastPoint[1]; // col difference
+            const dy = lastPoint[0] - secondLastPoint[0]; // row difference
+            
+            // Check if head's path intersects with any part of the arrow's own body
+            let checkRow = lastPoint[0] + dy;
+            let checkCol = lastPoint[1] + dx;
+            
+            // Check path from head until it exits grid
+            while (checkRow >= 0 && checkRow < GRID_SIZE && 
+                   checkCol >= 0 && checkCol < GRID_SIZE) {
+                
+                // Does this position collide with arrow's own body?
+                // Don't check the head itself (last point)
+                for (let i = 0; i < path.length - 1; i++) {
+                    if (path[i][0] === checkRow && path[i][1] === checkCol) {
+                        return true; // Self-blocking!
+                    }
+                }
+                
+                checkRow += dy;
+                checkCol += dx;
+            }
+            
+            return false; // Not self-blocking
+        }
+
+        // Generate arrows using layered/surrounding strategy (REVERSE ORDER for solvability)
+        // TRUE REVERSE CONSTRUCTION with STRICT solvability checking
+        function generateLayeredArrows(numArrows) {
+            const colors = themes[currentTheme].arrowColors;
+            
+            const arrows = [];
+            const innerCount = Math.floor(numArrows * 0.35); // 35% inner (placed first, removed last)
+            
+            // STEP 1: Place INNER arrows first (these will be removed LAST)
+            let innerAttempts = 0;
+            while (arrows.length < innerCount && innerAttempts < MAX_GENERATION_ATTEMPTS) {
+                innerAttempts++;
+                const targetLength = 6 + Math.floor(Math.random() * 8); // 6-13 points
+                const path = generateArrowPath(arrows, targetLength, true); // prefer center
+                if (path) {
+                    const testArrow = {
+                        id: nextArrowId++,
+                        path: path,
+                        color: colors[arrows.length % colors.length],
+                        isAnimating: false
+                    };
+                    arrows.push(testArrow);
+                    
+                    // Verify still solvable
+                    if (!isStillSolvableGreedy(arrows)) {
+                        arrows.pop();
+                        continue;
+                    }
+                }
+            }
+            
+            // STEP 2: Place OUTER arrows last (these will be removed FIRST)
+            let outerAttempts = 0;
+            while (arrows.length < numArrows && outerAttempts < MAX_GENERATION_ATTEMPTS) {
+                outerAttempts++;
+                const targetLength = 8 + Math.floor(Math.random() * 11); // 8-18 points (longer)
+                const path = generateArrowPath(arrows, targetLength, false);
+                if (path) {
+                    const testArrow = {
+                        id: nextArrowId++,
+                        path: path,
+                        color: colors[arrows.length % colors.length],
+                        isAnimating: false
+                    };
+                    arrows.push(testArrow);
+                    
+                    // Verify still solvable
+                    if (!isStillSolvableGreedy(arrows)) {
+                        arrows.pop();
+                        continue;
+                    }
+                }
+            }
+
+            return arrows;
+        }
+
+        // Generate a complete puzzle with TRUE reverse construction
+        function generatePuzzle() {
+            const numArrows = MIN_ARROWS + Math.floor(Math.random() * (MAX_ARROWS - MIN_ARROWS + 1));
+            
+            // Randomly choose generation strategy
+            const strategy = Math.random();
+
+            if (strategy < 0.5) {
+                return generateLayeredArrows(numArrows);
+            } else {
+                return generateDistributedArrows(numArrows);
+            }
+        }
+
+        // Reverse construction: Distributed strategy with STRICT movability guarantee
+        // Ensures puzzle is solvable at EVERY step with head-only collision
+        function generateDistributedArrows(numArrows) {
+            const colors = themes[currentTheme].arrowColors;
+            
+            const arrows = [];
+            let attempts = 0;
+            let consecutiveFailures = 0;
+            const maxConsecutiveFailures = 50;
+
+            while (arrows.length < numArrows && consecutiveFailures < maxConsecutiveFailures) {
+                attempts++;
+                
+                // Weighted length distribution
+                let targetLength;
+                const roll = Math.random();
+                if (roll < 0.25) {
+                    targetLength = 5 + Math.floor(Math.random() * 4); // 5-8
+                } else if (roll < 0.75) {
+                    targetLength = 9 + Math.floor(Math.random() * 5); // 9-13
+                } else {
+                    targetLength = 14 + Math.floor(Math.random() * 5); // 14-18
+                }
+                
+                const path = generateArrowPath(arrows, targetLength, false);
+                
+                if (path) {
+                    // Create temporary arrow to test
+                    const testArrow = {
+                        id: nextArrowId++,
+                        path: path,
+                        color: colors[arrows.length % colors.length],
+                        isAnimating: false
+                    };
+                    arrows.push(testArrow);
+                    
+                    // STRICT CHECK: Verify puzzle is still solvable
+                    // Use greedy simulation: repeatedly remove movable arrows
+                    if (!isStillSolvableGreedy(arrows)) {
+                        // This arrow creates a deadlock - remove it
+                        arrows.pop();
+                        consecutiveFailures++;
+                        continue;
+                    }
+                    
+                    // Success! Reset failure counter
+                    consecutiveFailures = 0;
+                } else {
+                    consecutiveFailures++;
+                }
+            }
+
+            return arrows;
+        }
+
+        // Greedy solvability check: Can we remove all arrows by repeatedly removing movable ones?
+        function isStillSolvableGreedy(arrows) {
+            // Clone the arrows array to test
+            let testArrows = arrows.map(a => ({...a, path: a.path.map(p => [...p])}));
+            
+            let maxIterations = testArrows.length * 2; // Prevent infinite loops
+            let iterations = 0;
+            
+            while (testArrows.length > 0 && iterations < maxIterations) {
+                iterations++;
+                
+                // Find all movable arrows
+                let movableIndices = [];
+                for (let i = 0; i < testArrows.length; i++) {
+                    if (canArrowMove(i, testArrows)) {
+                        movableIndices.push(i);
+                    }
+                }
+                
+                // If no arrows are movable but we still have arrows, it's a deadlock
+                if (movableIndices.length === 0) {
+                    return false;
+                }
+                
+                // Remove one movable arrow (simulate solving)
+                // Choose randomly to test different paths
+                const removeIndex = movableIndices[Math.floor(Math.random() * movableIndices.length)];
+                testArrows.splice(removeIndex, 1);
+            }
+            
+            // If we cleared all arrows, it's solvable
+            return testArrows.length === 0;
+        }
+
+        // Old validation-based function - NO LONGER NEEDED with reverse construction
+        // Kept for reference only
+        function generateInterweavingArrows(numArrows) {
+            return generateDistributedArrows(numArrows);
+        }
+
+        // Emergency fallback - NO LONGER NEEDED with reverse construction
+        function generateSimpleSolvablePuzzle() {
+            return generateDistributedArrows(15);
+        }
+
+        // Get the direction vector from the last segment of an arrow
+        function getArrowDirection(arrow) {
+            const path = arrow.path;
+            const lastPoint = path[path.length - 1];
+            const secondLastPoint = path[path.length - 2];
+            const dx = lastPoint[1] - secondLastPoint[1]; // col difference
+            const dy = lastPoint[0] - secondLastPoint[0]; // row difference
+            return [dy, dx]; // [row_delta, col_delta]
+        }
+
+        // Check if an arrow's HEAD path is blocked by other arrows
+        // The arrow moves like a snake - only the head needs clear path!
+        function canArrowMove(arrowIndex, arrows = testArrows) {
+            const arrow = arrows[arrowIndex];
+            const [dy, dx] = getArrowDirection(arrow);
+            
+            // Only check the HEAD (last point in path)
+            // IMPORTANT: Round to nearest grid position (animation may leave fractional coords)
+            const headPoint = arrow.path[arrow.path.length - 1];
+            const headRow = Math.round(headPoint[0]);
+            const headCol = Math.round(headPoint[1]);
+            
+            let checkRow = headRow + dy;
+            let checkCol = headCol + dx;
+            
+            // Keep checking in the direction until we exit the grid
+            while (checkRow >= 0 && checkRow < GRID_SIZE && 
+                   checkCol >= 0 && checkCol < GRID_SIZE) {
+                
+                // Check if any OTHER arrow occupies this point
+                for (let i = 0; i < arrows.length; i++) {
+                    if (i === arrowIndex) continue; // Skip self
+
+                    // Skip arrows that are currently animating (they're escaping)
+                    if (arrows[i].isAnimating) continue;
+
+                    for (let otherPoint of arrows[i].path) {
+                        // Round other points too for consistent comparison
+                        const otherRow = Math.round(otherPoint[0]);
+                        const otherCol = Math.round(otherPoint[1]);
+                        
+                        if (otherRow === checkRow && otherCol === checkCol) {
+                            return false; // Head path is blocked!
+                        }
+                    }
+                }
+                
+                // Move one more step in the direction
+                checkRow += dy;
+                checkCol += dx;
+            }
+            
+            return true; // Head path is clear
+        }
+
+        // Solver: Check if puzzle is solvable
+        function isPuzzleSolvable(arrows) {
+            // Use BFS to try all possible move sequences
+            const initialState = JSON.stringify(arrows.map(a => a.path));
+            const queue = [{ arrows: arrows.map(a => ({...a, path: [...a.path]})), state: initialState }];
+            const visited = new Set([initialState]);
+            const maxIterations = 10000; // Prevent infinite loops
+            let iterations = 0;
+            
+            while (queue.length > 0 && iterations < maxIterations) {
+                iterations++;
+                const { arrows: currentArrows } = queue.shift();
+                
+                // Check if all arrows are removed (solved)
+                if (currentArrows.length === 0) {
+                    return true;
+                }
+                
+                // Try moving each arrow
+                for (let i = 0; i < currentArrows.length; i++) {
+                    if (canArrowMove(i, currentArrows)) {
+                        // Create new state with this arrow removed
+                        const newArrows = currentArrows.filter((_, idx) => idx !== i);
+                        const newState = JSON.stringify(newArrows.map(a => a.path));
+                        
+                        if (!visited.has(newState)) {
+                            visited.add(newState);
+                            queue.push({ 
+                                arrows: newArrows.map(a => ({...a, path: [...a.path]})), 
+                                state: newState 
+                            });
+                        }
+                    }
+                }
+            }
+            
+            return false; // No solution found
+        }
+
+        // Check if a point is on an arrow's path
+        function getArrowAtPoint(canvasX, canvasY) {
+            for (let i = testArrows.length - 1; i >= 0; i--) {
+                const arrow = testArrows[i];
+                
+                // Check each segment of the arrow path
+                for (let j = 0; j < arrow.path.length; j++) {
+                    const pos = gridToCanvas(arrow.path[j][0], arrow.path[j][1]);
+                    const dist = Math.sqrt(
+                        Math.pow(canvasX - pos.x, 2) + 
+                        Math.pow(canvasY - pos.y, 2)
+                    );
+                    
+                    // Check if click is within the dot radius
+                    if (dist <= DOT_RADIUS + 5) {
+                        return i;
+                    }
+                }
+                
+                // Check line segments
+                for (let j = 0; j < arrow.path.length - 1; j++) {
+                    const p1 = gridToCanvas(arrow.path[j][0], arrow.path[j][1]);
+                    const p2 = gridToCanvas(arrow.path[j + 1][0], arrow.path[j + 1][1]);
+                    
+                    const dist = distanceToLineSegment(canvasX, canvasY, p1.x, p1.y, p2.x, p2.y);
+                    if (dist <= LINE_WIDTH + 3) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        // Calculate distance from point to line segment
+        function distanceToLineSegment(px, py, x1, y1, x2, y2) {
+            const A = px - x1;
+            const B = py - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) param = dot / lenSq;
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+            
+            const dx = px - xx;
+            const dy = py - yy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Start arrow animation - adds arrow to animation tracking system
+        function startArrowAnimation(arrowIndex) {
+            const arrow = testArrows[arrowIndex];
+
+            // Prevent re-animating an already animating arrow
+            if (arrow.isAnimating) return;
+
+            // Mark arrow as animating
+            arrow.isAnimating = true;
+
+            // Get arrow direction
+            const [dy, dx] = getArrowDirection(arrow);
+
+            // Build the EXTENDED path - original arrow path + continuation in exit direction
+            const originalPath = arrow.path.map(p => [...p]);
+            const extendedPath = [...originalPath];
+
+            // Extend the path forward until head exits grid
+            let lastPoint = originalPath[originalPath.length - 1];
+            let checkRow = lastPoint[0];
+            let checkCol = lastPoint[1];
+
+            // Keep adding points in the direction until we're well off screen
+            while (extendedPath.length < originalPath.length + 30) {
+                checkRow += dy;
+                checkCol += dx;
+                extendedPath.push([checkRow, checkCol]);
+            }
+
+            // Create animation state
+            const animState = {
+                arrowId: arrow.id,
+                startTime: Date.now(),
+                duration: ANIMATION_DURATION,
+                extendedPath: extendedPath,
+                originalPathLength: originalPath.length
+            };
+
+            // Register animation
+            activeAnimations.set(arrow.id, animState);
+
+            // Start global loop if not running
+            if (animationFrameId === null) {
+                animationFrameId = requestAnimationFrame(globalAnimationLoop);
+            }
+        }
+
+        // Global animation loop - updates all active animations
+        function globalAnimationLoop() {
+            if (activeAnimations.size === 0) {
+                animationFrameId = null;
+                return; // Stop loop when no animations
+            }
+
+            const now = Date.now();
+            const completedAnimations = [];
+
+            // Update all active animations
+            for (let [arrowId, animState] of activeAnimations) {
+                const elapsed = now - animState.startTime;
+                const progress = Math.min(elapsed / animState.duration, 1);
+
+                // Find current arrow (index may have shifted)
+                const currentIndex = testArrows.findIndex(a => a.id === arrowId);
+                if (currentIndex === -1) {
+                    // Arrow was removed elsewhere (shouldn't happen)
+                    completedAnimations.push(arrowId);
+                    continue;
+                }
+
+                const arrow = testArrows[currentIndex];
+
+                // Update arrow path based on progress
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const offset = eased * (animState.extendedPath.length - animState.originalPathLength + animState.originalPathLength);
+
+                const newPath = [];
+                for (let i = 0; i < animState.originalPathLength; i++) {
+                    const newIndex = i + offset;
+                    const baseIndex = Math.floor(newIndex);
+                    const fraction = newIndex - baseIndex;
+
+                    if (baseIndex < animState.extendedPath.length - 1) {
+                        const p1 = animState.extendedPath[baseIndex];
+                        const p2 = animState.extendedPath[baseIndex + 1];
+
+                        const newRow = p1[0] + (p2[0] - p1[0]) * fraction;
+                        const newCol = p1[1] + (p2[1] - p1[1]) * fraction;
+
+                        if (newRow >= -1 && newRow <= GRID_SIZE &&
+                            newCol >= -1 && newCol <= GRID_SIZE) {
+                            newPath.push([newRow, newCol]);
+                        }
+                    }
+                }
+
+                arrow.path = newPath;
+
+                // Check if animation complete
+                if (progress >= 1 || newPath.length === 0) {
+                    completedAnimations.push(arrowId);
+                }
+            }
+
+            // Render once for all animations
+            render();
+
+            // Clean up completed animations
+            for (let arrowId of completedAnimations) {
+                const currentIndex = testArrows.findIndex(a => a.id === arrowId);
+                if (currentIndex !== -1) {
+                    testArrows.splice(currentIndex, 1);
+                }
+                activeAnimations.delete(arrowId);
+            }
+
+            // Check win condition after cleanup
+            if (testArrows.length === 0 && activeAnimations.size === 0) {
+                animationFrameId = null;
+                render(); // Will display win message
+                return;
+            }
+
+            // Continue loop
+            animationFrameId = requestAnimationFrame(globalAnimationLoop);
+        }
+
+        // Convert grid position to canvas coordinates
+        function gridToCanvas(row, col) {
+            return {
+                x: col * CELL_SIZE + CELL_SIZE / 2,
+                y: row * CELL_SIZE + CELL_SIZE / 2
+            };
+        }
+
+        // Draw grid dots
+        function drawGrid() {
+            // Grid dots are now invisible for cleaner look
+            // Uncomment below to show grid dots again
+            /*
+            ctx.fillStyle = '#444';
+            
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    const pos = gridToCanvas(row, col);
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, DOT_RADIUS, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            */
+        }
+
+        // Draw a single arrow with multi-point path
+        function drawArrow(arrow) {
+            const path = arrow.path;
+
+            if (path.length < 2) return; // Need at least 2 points
+
+            // Check if this arrow is being hinted
+            const isHinted = arrow.id === hintedArrowId;
+
+            // Draw pulsing glow for hinted arrow
+            if (isHinted) {
+                const pulseTime = Date.now() % 1000; // 1 second pulse cycle
+                const pulseAlpha = 0.3 + (Math.sin(pulseTime / 159) * 0.3); // Oscillate between 0.0 and 0.6
+
+                ctx.strokeStyle = '#FFD700'; // Gold color for hint
+                ctx.lineWidth = LINE_WIDTH + 8; // Wider glow
+                ctx.globalAlpha = pulseAlpha;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#FFD700';
+
+                ctx.beginPath();
+                const glowStartPos = gridToCanvas(path[0][0], path[0][1]);
+                ctx.moveTo(glowStartPos.x, glowStartPos.y);
+                for (let i = 1; i < path.length; i++) {
+                    const pos = gridToCanvas(path[i][0], path[i][1]);
+                    ctx.lineTo(pos.x, pos.y);
+                }
+                ctx.stroke();
+
+                // Reset shadow
+                ctx.shadowBlur = 0;
+            }
+
+            // Reduce opacity for animating arrows (visual feedback)
+            ctx.globalAlpha = arrow.isAnimating ? 0.7 : 1.0;
+
+            // Draw line with subtle rounding at corners
+            ctx.strokeStyle = arrow.color;
+            ctx.lineWidth = LINE_WIDTH;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            const startPos = gridToCanvas(path[0][0], path[0][1]);
+            ctx.moveTo(startPos.x, startPos.y);
+            
+            // Draw mostly straight lines with subtle curves at turns
+            for (let i = 1; i < path.length; i++) {
+                const pos = gridToCanvas(path[i][0], path[i][1]);
+                
+                // Check if this is a turn (not the last point and direction changes)
+                if (i > 0 && i < path.length - 1) {
+                    const prevPos = gridToCanvas(path[i - 1][0], path[i - 1][1]);
+                    const nextPos = gridToCanvas(path[i + 1][0], path[i + 1][1]);
+                    
+                    const dx1 = pos.x - prevPos.x;
+                    const dy1 = pos.y - prevPos.y;
+                    const dx2 = nextPos.x - pos.x;
+                    const dy2 = nextPos.y - pos.y;
+                    
+                    // If direction changes, use a subtle curve
+                    if (dx1 !== dx2 || dy1 !== dy2) {
+                        // Calculate point before corner
+                        const cornerRadius = 8; // Small radius for subtle rounding
+                        const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+                        const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                        
+                        const beforeX = pos.x - (dx1 / len1) * Math.min(cornerRadius, len1 / 2);
+                        const beforeY = pos.y - (dy1 / len1) * Math.min(cornerRadius, len1 / 2);
+                        const afterX = pos.x + (dx2 / len2) * Math.min(cornerRadius, len2 / 2);
+                        const afterY = pos.y + (dy2 / len2) * Math.min(cornerRadius, len2 / 2);
+                        
+                        // Draw line to before corner, curve through corner
+                        ctx.lineTo(beforeX, beforeY);
+                        ctx.quadraticCurveTo(pos.x, pos.y, afterX, afterY);
+                    } else {
+                        // Straight line - no turn
+                        ctx.lineTo(pos.x, pos.y);
+                    }
+                } else {
+                    // First or last point - always draw straight line to ensure connection
+                    ctx.lineTo(pos.x, pos.y);
+                }
+            }
+            
+            ctx.stroke();
+            
+            // Calculate direction from last two points
+            const lastPoint = path[path.length - 1];
+            const secondLastPoint = path[path.length - 2];
+            const dx = lastPoint[1] - secondLastPoint[1]; // col difference
+            const dy = lastPoint[0] - secondLastPoint[0]; // row difference
+            
+            // Draw custom arrow head that matches body width
+            const endPos = gridToCanvas(lastPoint[0], lastPoint[1]);
+            const arrowHeadLength = 10; // Smaller arrow head
+            const arrowHeadWidth = LINE_WIDTH * 2.5; // Width proportional to body
+            
+            // Calculate tip position
+            let tipX, tipY;
+            if (dx > 0) {
+                // Pointing RIGHT
+                tipX = endPos.x + arrowHeadLength;
+                tipY = endPos.y;
+            } else if (dx < 0) {
+                // Pointing LEFT
+                tipX = endPos.x - arrowHeadLength;
+                tipY = endPos.y;
+            } else if (dy > 0) {
+                // Pointing DOWN
+                tipX = endPos.x;
+                tipY = endPos.y + arrowHeadLength;
+            } else if (dy < 0) {
+                // Pointing UP
+                tipX = endPos.x;
+                tipY = endPos.y - arrowHeadLength;
+            }
+            
+            // Draw arrow head triangle that covers the line end
+            ctx.fillStyle = arrow.color;
+            ctx.beginPath();
+            
+            // Calculate arrow head triangle based on direction
+            if (dx > 0) {
+                // Pointing RIGHT - triangle covers from endPos to tip
+                ctx.moveTo(tipX, tipY); // tip
+                ctx.lineTo(endPos.x, endPos.y - arrowHeadWidth);
+                ctx.lineTo(endPos.x, endPos.y + arrowHeadWidth);
+            } else if (dx < 0) {
+                // Pointing LEFT
+                ctx.moveTo(tipX, tipY); // tip
+                ctx.lineTo(endPos.x, endPos.y - arrowHeadWidth);
+                ctx.lineTo(endPos.x, endPos.y + arrowHeadWidth);
+            } else if (dy > 0) {
+                // Pointing DOWN
+                ctx.moveTo(tipX, tipY); // tip
+                ctx.lineTo(endPos.x - arrowHeadWidth, endPos.y);
+                ctx.lineTo(endPos.x + arrowHeadWidth, endPos.y);
+            } else if (dy < 0) {
+                // Pointing UP
+                ctx.moveTo(tipX, tipY); // tip
+                ctx.lineTo(endPos.x - arrowHeadWidth, endPos.y);
+                ctx.lineTo(endPos.x + arrowHeadWidth, endPos.y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+
+            // Reset opacity
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Main render function
+        function render() {
+            // Clear canvas with theme background
+            ctx.fillStyle = themes[currentTheme].background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid dots
+            drawGrid();
+
+            // Draw all arrows
+            testArrows.forEach(arrow => drawArrow(arrow));
+
+            // Update UI elements
+            updateLivesDisplay();
+            updateTimerDisplay();
+
+            // Check for game over
+            if (gameOver) {
+                displayGameOverMessage();
+            }
+            // Check for win condition
+            else if (testArrows.length === 0 && activeAnimations.size === 0) {
+                displayWinMessage();
+            }
+        }
+
+        // Update lives display in HTML
+        function updateLivesDisplay() {
+            const livesDisplay = document.getElementById('livesDisplay');
+            livesDisplay.innerHTML = '';
+
+            for (let i = 0; i < maxLives; i++) {
+                const heart = document.createElement('span');
+                if (i < lives) {
+                    heart.textContent = '❤️';
+                } else {
+                    heart.textContent = '🖤';
+                    heart.style.opacity = '0.3';
+                }
+                livesDisplay.appendChild(heart);
+            }
+        }
+
+        // Update timer display in HTML
+        function updateTimerDisplay() {
+            const timerDisplay = document.getElementById('timerDisplay');
+
+            if (!timerEnabled) {
+                timerDisplay.textContent = '⏱️ --:--';
+                timerDisplay.className = 'timer-display disabled';
+                return;
+            }
+
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            timerDisplay.textContent = `⏱️ ${timeString}`;
+
+            // Update class based on time remaining
+            if (timeRemaining <= 15) {
+                timerDisplay.className = 'timer-display critical';
+            } else if (timeRemaining <= 30) {
+                timerDisplay.className = 'timer-display warning';
+            } else {
+                timerDisplay.className = 'timer-display';
+            }
+        }
+        
+        
+        // Start the timer
+        function startTimer() {
+            // Always track game start time, even if timer is disabled
+            gameStartTime = Date.now();
+
+            if (!timerEnabled) {
+                // Timer is disabled, don't start countdown
+                return;
+            }
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timeRemaining = timeLimit;
+
+            timerInterval = setInterval(() => {
+                if (!gameOver) {
+                    timeRemaining--;
+
+                    if (timeRemaining <= 0) {
+                        timeRemaining = 0;
+                        gameOver = true;
+                        clearInterval(timerInterval);
+                    }
+
+                    render();
+                }
+            }, 1000);
+        }
+        
+        // Stop the timer
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        
+        // Display game over message
+        function displayGameOverMessage() {
+            stopTimer();
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#F44336';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💔 GAME OVER 💔', canvas.width / 2, canvas.height / 2 - 50);
+            
+            ctx.fillStyle = '#FFF';
+            ctx.font = '24px Arial';
+            if (timeRemaining <= 0 && timerEnabled) {
+                ctx.fillText('Time ran out!', canvas.width / 2, canvas.height / 2);
+            } else {
+                ctx.fillText('All lives lost!', canvas.width / 2, canvas.height / 2);
+            }
+            
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#AAA';
+            ctx.fillText('Click "Generate New Puzzle" to try again', canvas.width / 2, canvas.height / 2 + 60);
+        }
+        
+        // Display win message
+        function displayWinMessage() {
+            // Stop the timer
+            stopTimer();
+
+            // Calculate actual time taken from game start
+            const timeTaken = Math.floor((Date.now() - gameStartTime) / 1000);
+            const minutes = Math.floor(timeTaken / 60);
+            const seconds = timeTaken % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Calculate score (faster time = higher score)
+            const score = Math.max(0, Math.floor((timeLimit - timeTaken) * 10));
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🎉 YOU WIN! 🎉', canvas.width / 2, canvas.height / 2 - 90);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = '24px Arial';
+            ctx.fillText('All arrows removed!', canvas.width / 2, canvas.height / 2 - 50);
+
+            // Display stats
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(`⏱️ Time: ${timeString}`, canvas.width / 2, canvas.height / 2 - 10);
+
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(`⭐ Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+
+            ctx.fillStyle = '#FFA726';
+            ctx.font = '18px Arial';
+            ctx.fillText(`💪 Lives Remaining: ${lives}/${maxLives}`, canvas.width / 2, canvas.height / 2 + 50);
+
+            // Encouragement message
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillText('🏆 Can you beat your time? Try again!', canvas.width / 2, canvas.height / 2 + 85);
+
+            // Share prompt
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#AAA';
+            ctx.fillText('Share your victory:', canvas.width / 2, canvas.width / 2 + 115);
+
+            // Show share modal button hint
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText('Click anywhere to see share options', canvas.width / 2, canvas.height / 2 + 140);
+
+            // Store win data for sharing
+            window.lastWinData = {
+                time: timeString,
+                score: score,
+                lives: lives,
+                difficulty: currentDifficulty,
+                shape: shapeMode
+            };
+        }
+
+        // Show hint for next available move
+        function showHint() {
+            // Don't show hint if game is over
+            if (gameOver) return;
+
+            // Clear any existing hint
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+
+            // Find all movable arrows (not animating)
+            const movableArrows = [];
+            for (let i = 0; i < testArrows.length; i++) {
+                const arrow = testArrows[i];
+                if (!arrow.isAnimating && canArrowMove(i)) {
+                    movableArrows.push(arrow);
+                }
+            }
+
+            // If no movable arrows, show message
+            if (movableArrows.length === 0) {
+                // Flash hint button red to indicate no moves
+                const hintBtn = document.getElementById('hintBtn');
+                hintBtn.classList.add('no-moves');
+                hintBtn.textContent = '❌ No moves!';
+
+                setTimeout(() => {
+                    hintBtn.classList.remove('no-moves');
+                    hintBtn.textContent = '💡 Hint';
+                }, 1500);
+
+                hintedArrowId = null;
+                render();
+                return;
+            }
+
+            // Pick a random movable arrow
+            const randomArrow = movableArrows[Math.floor(Math.random() * movableArrows.length)];
+            hintedArrowId = randomArrow.id;
+
+            // Clear hint after 5 seconds
+            hintTimeout = setTimeout(() => {
+                hintedArrowId = null;
+                hintTimeout = null;
+                render();
+            }, 5000);
+
+            // Start animation loop for pulsing effect
+            const startHintAnimation = () => {
+                if (hintedArrowId !== null) {
+                    render();
+                    requestAnimationFrame(startHintAnimation);
+                }
+            };
+            startHintAnimation();
+        }
+
+        // Regenerate puzzle
+        function regeneratePuzzle() {
+            // Clear all active animations
+            activeAnimations.clear();
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            // Clear hint
+            hintedArrowId = null;
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+
+            // Reset arrow ID counter
+            nextArrowId = 0;
+
+            // Reset game state
+            lives = maxLives;
+            gameOver = false;
+            timeRemaining = timeLimit;
+
+            // Stop and restart timer
+            stopTimer();
+
+            // Ensure canvas is properly sized
+            resizeCanvas();
+
+            testArrows = generatePuzzle();
+            render();
+
+            // Start timer after puzzle is generated
+            startTimer();
+        }
+        
+        // Toggle between colorful and classic themes
+        function toggleTheme() {
+            currentTheme = currentTheme === 'colorful' ? 'classic' : 'colorful';
+            
+            // Update arrow colors for existing arrows
+            const colors = themes[currentTheme].arrowColors;
+            testArrows.forEach((arrow, index) => {
+                arrow.color = colors[index % colors.length];
+            });
+
+            render();
+        }
+        
+        // Toggle timer on/off
+        function toggleTimer() {
+            timerEnabled = !timerEnabled;
+
+            const btn = document.getElementById('timerToggleBtn');
+
+            if (timerEnabled) {
+                // Timer enabled - start it
+                btn.textContent = '⏱️ Timer: ON';
+                btn.classList.add('enabled');
+                startTimer();
+            } else {
+                // Timer disabled - stop it
+                btn.textContent = '⏱️ Timer: OFF';
+                btn.classList.remove('enabled');
+                stopTimer();
+                timeRemaining = timeLimit; // Reset display
+            }
+
+            render();
+        }
+        
+        // Change difficulty level
+        function changeDifficulty(newDifficulty) {
+            if (activeAnimations.size > 0) return;
+
+            currentDifficulty = newDifficulty;
+            const settings = difficulties[currentDifficulty];
+
+            // Update grid size
+            GRID_SIZE = settings.gridSize;
+
+            // Resize canvas and update CELL_SIZE
+            resizeCanvas();
+
+            // Regenerate shape grid for new grid size
+            shapeGrid = generateShapeGrid(shapeMode, GRID_SIZE);
+
+            // Update arrow parameters
+            MIN_ARROWS = settings.minArrows;
+            MAX_ARROWS = settings.maxArrows;
+            MIN_ARROW_LENGTH = settings.minLength;
+            MAX_ARROW_LENGTH = settings.maxLength;
+
+            // Update lives
+            maxLives = settings.lives;
+            lives = maxLives;
+
+            // Update timer
+            timeLimit = settings.timeLimit;
+            timeRemaining = timeLimit;
+
+            // Reset game
+            gameOver = false;
+            stopTimer();
+
+            // Clear hint
+            hintedArrowId = null;
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+
+            testArrows = generatePuzzle();
+            render();
+
+            if (timerEnabled) {
+                startTimer();
+            }
+        }
+
+        // Change shape mode
+        function changeShape(newShape) {
+            if (activeAnimations.size > 0) return;
+
+            shapeMode = newShape;
+
+            // Generate the shape grid for the current grid size
+            shapeGrid = generateShapeGrid(shapeMode, GRID_SIZE);
+
+            // Reset and regenerate puzzle with new shape
+            gameOver = false;
+            lives = maxLives;
+            timeRemaining = timeLimit;
+            stopTimer();
+
+            // Clear hint
+            hintedArrowId = null;
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+
+            // Ensure canvas is properly sized
+            resizeCanvas();
+
+            testArrows = generatePuzzle();
+            render();
+
+            if (timerEnabled) {
+                startTimer();
+            }
+        }
+
+        // Handle canvas clicks
+        canvas.addEventListener('click', (e) => {
+            if (gameOver) return;
+
+            const rect = canvas.getBoundingClientRect();
+            // Scale coordinates based on canvas display size vs actual size
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            const arrowIndex = getArrowAtPoint(x, y);
+
+            if (arrowIndex !== -1) {
+                const arrow = testArrows[arrowIndex];
+
+                // Don't allow clicking arrows that are already animating
+                if (arrow.isAnimating) return;
+
+                // Clear hint when user clicks an arrow
+                hintedArrowId = null;
+                if (hintTimeout) {
+                    clearTimeout(hintTimeout);
+                    hintTimeout = null;
+                }
+
+                const [dy, dx] = getArrowDirection(arrow);
+                const headPoint = arrow.path[arrow.path.length - 1];
+                const headRow = Math.round(headPoint[0]);
+                const headCol = Math.round(headPoint[1]);
+
+                if (canArrowMove(arrowIndex)) {
+                    startArrowAnimation(arrowIndex);
+                } else {
+                    // Deduct a life for trying to move a blocked arrow
+                    lives--;
+
+                    if (lives <= 0) {
+                        gameOver = true;
+                    }
+
+                    // Show what's blocking it
+                    let checkRow = headRow + dy;
+                    let checkCol = headCol + dx;
+
+                    let blockerIndex = -1;
+                    let blockerPosition = null;
+                    
+                    let foundBlocker = false;
+                    while (checkRow >= 0 && checkRow < GRID_SIZE && 
+                           checkCol >= 0 && checkCol < GRID_SIZE && !foundBlocker) {
+                        
+                        for (let i = 0; i < testArrows.length; i++) {
+                            if (i === arrowIndex) continue;
+                            
+                            for (let otherPoint of testArrows[i].path) {
+                                const otherRow = Math.round(otherPoint[0]);
+                                const otherCol = Math.round(otherPoint[1]);
+
+                                if (otherRow === checkRow && otherCol === checkCol) {
+                                    blockerIndex = i;
+                                    blockerPosition = [checkRow, checkCol];
+                                    foundBlocker = true;
+                                    break;
+                                }
+                            }
+                            if (foundBlocker) break;
+                        }
+                        
+                        checkRow += dy;
+                        checkCol += dx;
+                    }
+                    
+                    // VISUAL FEEDBACK: Flash the blocking arrow RED
+                    if (blockerIndex !== -1) {
+                        const originalColor = testArrows[blockerIndex].color;
+                        testArrows[blockerIndex].color = '#FF0000'; // Red
+                        render();
+                        
+                        // Flash back after 500ms
+                        setTimeout(() => {
+                            if (testArrows[blockerIndex]) {
+                                testArrows[blockerIndex].color = originalColor;
+                                render();
+                            }
+                        }, 500);
+                    } else {
+                        // Re-render to update hearts display
+                        render();
+                    }
+                }
+            }
+        });
+
+        // Initialize canvas size
+        resizeCanvas();
+
+        // Initialize shape grid
+        shapeGrid = generateShapeGrid(shapeMode, GRID_SIZE);
+
+        // Initialize puzzle
+        testArrows = generatePuzzle();
+
+        // Initial render
+        render();
+
+        // Always initialize game start time for tracking elapsed time
+        gameStartTime = Date.now();
+
+        // Timer starts disabled by default - only start countdown if enabled
+        if (timerEnabled) {
+            startTimer();
+        }
+
+        // How-to Modal Functions
+        function toggleHowTo() {
+            const modal = document.getElementById('howToModal');
+            modal.classList.toggle('active');
+        }
+
+        function closeHowToOnBackdrop(event) {
+            if (event.target.id === 'howToModal') {
+                toggleHowTo();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('howToModal');
+                if (modal.classList.contains('active')) {
+                    toggleHowTo();
+                }
+                const shareModal = document.getElementById('shareModal');
+                if (shareModal.classList.contains('active')) {
+                    toggleShare();
+                }
+            }
+
+            // H key for hint
+            if (event.key === 'h' || event.key === 'H') {
+                // Don't trigger if user is typing in an input field
+                if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+                    showHint();
+                }
+            }
+        });
+
+        // Share Modal Functions
+        function toggleShare() {
+            const modal = document.getElementById('shareModal');
+            const isOpening = !modal.classList.contains('active');
+
+            if (isOpening && window.lastWinData) {
+                // Populate share modal with win data
+                document.getElementById('shareTime').textContent = window.lastWinData.time;
+                document.getElementById('shareScore').textContent = window.lastWinData.score;
+                document.getElementById('shareLives').textContent = `${window.lastWinData.lives}/${maxLives}`;
+                document.getElementById('shareDifficulty').textContent = window.lastWinData.difficulty.charAt(0).toUpperCase() + window.lastWinData.difficulty.slice(1);
+            }
+
+            modal.classList.toggle('active');
+        }
+
+        function closeShareOnBackdrop(event) {
+            if (event.target.id === 'shareModal') {
+                toggleShare();
+            }
+        }
+
+        function getShareText() {
+            if (!window.lastWinData) return '';
+
+            const { time, score, lives, difficulty, shape } = window.lastWinData;
+            const shapeText = shape !== 'none' ? ` (${shape} shape)` : '';
+
+            return `🎉 I just beat Arrows Puzzle Escape!\n⏱️ Time: ${time}\n⭐ Score: ${score}\n💪 Lives: ${lives}/${maxLives}\n📊 Difficulty: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}${shapeText}\n\nCan you beat my score? Play now! 🏆`;
+        }
+
+        function shareToTwitter() {
+            const text = getShareText();
+            const url = 'https://pipspuzzle.com/arrowsescape/';
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl, '_blank');
+        }
+
+        function shareToFacebook() {
+            const url = 'https://pipspuzzle.com/arrowsescape/';
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            window.open(facebookUrl, '_blank');
+        }
+
+        function shareToLinkedIn() {
+            const url = 'https://pipspuzzle.com/arrowsescape/';
+            const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+            window.open(linkedinUrl, '_blank');
+        }
+
+        function copyShareLink() {
+            const url = 'https://pipspuzzle.com/arrowsescape/';
+            const text = getShareText() + '\n' + url;
+
+            navigator.clipboard.writeText(text).then(() => {
+                // Visual feedback
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span>✓</span> Copied!';
+                btn.style.backgroundColor = '#4CAF50';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.backgroundColor = '#666';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard. Please try again.');
+            });
+        }
+
+        // Track if user just won to show share modal
+        let justWon = false;
+
+        // Update canvas click handler to show share modal after win
+        const originalClickHandler = canvas.onclick;
+        canvas.addEventListener('click', function(e) {
+            // If user just won and clicks canvas, show share modal
+            if (justWon && testArrows.length === 0 && activeAnimations.size === 0) {
+                toggleShare();
+                justWon = false;
+            }
+        });
+
+        // Modify displayWinMessage to set justWon flag
+        const originalDisplayWinMessage = displayWinMessage;
+        displayWinMessage = function() {
+            originalDisplayWinMessage();
+            justWon = true;
+
+            // Auto-show share modal after 2 seconds
+            setTimeout(() => {
+                if (justWon) {
+                    toggleShare();
+                }
+            }, 2000);
+        };
+    </script>
+
+    <!-- Supabase & Auth (for header) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-browser.js"></script>
+    <script src="/js/auth-manager.js"></script>
+    <script src="/js/email-auth-modal.js?v=2.0.2"></script>
+    <script src="/js/email-verification-ui.js?v=2.0.2"></script>
+    <script src="/js/signup-benefits-popup.js?v=2.0.2"></script>
+
+    <!-- Minimal Header -->
+    <script src="/js/minimal-header.js?v=1.1.4"></script>
+
+    <!-- Shared Footer -->
+    <script src="/js/shared-footer.js"></script>
+</body>
+</html>
