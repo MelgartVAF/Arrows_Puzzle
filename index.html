@@ -49,9 +49,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .bar-title{font-size:14px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-right{display:flex;gap:4px;flex-shrink:0}
 .lives{font-size:20px;display:flex;gap:2px;flex-shrink:0}
-.lives .heart{transition:opacity .2s}
+.lives .heart{transition:opacity .3s,transform .3s;display:inline-block}
 .lives .heart.lost{opacity:.2}
-.arrow-count{font-size:12px;font-weight:600;color:var(--dim);flex-shrink:0}
+.lives .heart.pulse{animation:heartPulse .4s ease-out}
+@keyframes heartPulse{0%{transform:scale(1)}30%{transform:scale(1.4)}100%{transform:scale(1)}}
+.arrow-count{font-size:12px;font-weight:600;color:var(--dim);flex-shrink:0;transition:transform .2s}
+.arrow-count.tick{animation:countTick .3s ease-out}
+@keyframes countTick{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
 
 .canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
@@ -547,25 +551,23 @@ function startExitAnim(idx){
     // Extend well past the edge so entire arrow disappears
     for(let i=0;i<orig.length+GRID_SIZE;i++){cr+=dy;cc+=dx;trail.push([cr,cc])}
     const maxOff=trail.length-orig.length;
-    // Constant speed: 30 cells per second, so duration scales with distance
-    const dur=Math.max(400,maxOff/30*1000);
+    // Constant speed: 35 cells per second (slightly faster for snappier feel)
+    const dur=Math.max(350,maxOff/35*1000);
     activeAnimations.set(a.id,{id:a.id,start:Date.now(),dur,trail,origLen:orig.length,maxOff,dy,dx});
     if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
 }
-// Bounce: snake forward toward blocker, hit it (flash red), snake back
+// Bounce: snake forward toward blocker, hit it (flash red), snake back with elastic
 function startBounce(idx,br,bc){
     const a=testArrows[idx];if(a.isAnimating)return;
     a.isAnimating=true;
     const[dy,dx]=arrowDir(a);
     const origPath=a.path.map(p=>[...p]);
     const head=origPath[origPath.length-1];
-    // Build extended path forward toward blocker (like exit anim)
     let dist=dx!==0?Math.abs(bc-Math.round(head[1])):Math.abs(br-Math.round(head[0]));
     dist=Math.max(dist,1);
     const fwdPath=[...origPath];
     let cr=head[0],cc=head[1];
     for(let i=0;i<dist;i++){cr+=dy;cc+=dx;fwdPath.push([cr,cc])}
-    // Bounce uses the exit-style snake animation but goes forward then reverses
     bounceAnimations.set(a.id,{
         id:a.id,start:Date.now(),dur:BOUNCE_DUR,
         origPath,fwdPath,origLen:origPath.length,
@@ -612,15 +614,17 @@ function animLoop(){
         const p=Math.min((now-s.start)/s.dur,1);
         const ci=testArrows.findIndex(a=>a.id===id);
         if(ci===-1){bdone.push(id);continue}
-        // Phase 1 (0→0.4): snake forward toward blocker
-        // Phase 2 (0.4→1.0): snake back to original position
-        let snakeOffset; // how many cells the whole arrow has shifted forward
-        if(p<0.4){
-            const t=p/0.4;
-            snakeOffset=s.fwdSteps*(1-Math.pow(1-t,2)); // ease out forward
+        // Phase 1 (0→0.35): snap forward toward blocker
+        // Phase 2 (0.35→1.0): elastic bounce back
+        let snakeOffset;
+        if(p<0.35){
+            const t=p/0.35;
+            snakeOffset=s.fwdSteps*(1-Math.pow(1-t,3)); // ease out forward (cubic)
         }else{
-            const t=(p-0.4)/0.6;
-            snakeOffset=s.fwdSteps*(1-t*t); // ease in back
+            const t=(p-0.35)/0.65;
+            // Elastic ease out for satisfying bounce
+            const elastic=1-Math.pow(1-t,3)*(Math.cos(t*Math.PI*2.5)*0.3+1);
+            snakeOffset=s.fwdSteps*(1-Math.min(1,elastic));
         }
         // Interpolate each point along the forward path
         const np=[];
@@ -635,9 +639,9 @@ function animLoop(){
             }
         }
         testArrows[ci].path=np.length?np:s.origPath.map(p=>[...p]);
-        // Flash bright red at impact, otherwise show persistent red if wrong
+        // Flash at impact, persistent red if wrong
         const isWrong=wrongArrows.has(id);
-        testArrows[ci].color=(p>=0.3&&p<=0.55)?'#f00':isWrong?'#c00':'#111';
+        testArrows[ci].color=(p>=0.28&&p<=0.5)?'#f00':isWrong?'#dc2626':'#111';
         if(p>=1)bdone.push(id);
     }
     render();
@@ -655,20 +659,130 @@ function animLoop(){
 // ================================================================
 function g2c(row,col){return{x:col*CELL_SIZE+CELL_SIZE/2,y:row*CELL_SIZE+CELL_SIZE/2}}
 
+// Hover tracking
+let hoveredArrowIdx=-1;
+canvas.addEventListener('mousemove',e=>{
+    if(isDragging||gameOver)return;
+    const{x,y}=screenToCanvas(e.clientX,e.clientY);
+    const idx=arrowAt(x,y);
+    if(idx!==hoveredArrowIdx){
+        hoveredArrowIdx=idx;
+        canvas.style.cursor=idx!==-1?(viewScale>1?'grab':'pointer'):(viewScale>1?'grab':'default');
+        render();
+    }
+});
+canvas.addEventListener('mouseleave',()=>{if(hoveredArrowIdx!==-1){hoveredArrowIdx=-1;render()}});
+
+// Particles
+const particles=[];
+function spawnParticles(row,col,color){
+    const pos=g2c(row,col);
+    for(let i=0;i<6;i++){
+        const angle=Math.random()*Math.PI*2,speed=CELL_SIZE*(1.5+Math.random()*2);
+        particles.push({x:pos.x,y:pos.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,color,size:Math.max(2,CELL_SIZE*.12)});
+    }
+}
+function updateParticles(dt){
+    for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];
+        p.x+=p.vx*dt;p.y+=p.vy*dt;
+        p.vx*=0.92;p.vy*=0.92;
+        p.life-=dt*2.5;
+        if(p.life<=0)particles.splice(i,1);
+    }
+}
+function drawParticles(){
+    for(const p of particles){
+        ctx.globalAlpha=p.life*0.8;
+        ctx.fillStyle=p.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);
+        ctx.fill();
+    }
+    ctx.globalAlpha=1;
+}
+
+// Screen shake
+let shakeAmount=0,shakeDecay=0;
+function triggerShake(){shakeAmount=Math.max(3,CELL_SIZE*0.15);shakeDecay=Date.now()}
+
+function drawGridDots(){
+    ctx.fillStyle='rgba(0,0,0,0.06)';
+    const r=Math.max(1,CELL_SIZE*0.04);
+    for(let row=0;row<GRID_SIZE;row++){
+        for(let col=0;col<GRID_SIZE;col++){
+            if(!isInShape(row,col))continue;
+            const p=g2c(row,col);
+            ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+        }
+    }
+}
+
 function drawArrow(a){
     const path=a.path;if(path.length<2)return;
     const hinted=a.id===hintedArrowId;
-    if(hinted){const pulse=.3+Math.sin(Date.now()%1000/159)*.3;ctx.strokeStyle='#888';ctx.lineWidth=LINE_WIDTH+Math.max(4,CELL_SIZE*.3);ctx.globalAlpha=pulse;ctx.lineCap='square';ctx.lineJoin='miter';ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}ctx.stroke()}
     const isHeld=a.id===heldArrowId;
     const isWrongArrow=wrongArrows.has(a.id);
-    const drawColor=isHeld&&!isWrongArrow?'#2563eb':a.color;
-    ctx.globalAlpha=a.isAnimating?.6:1;ctx.strokeStyle=drawColor;ctx.lineWidth=LINE_WIDTH;ctx.lineCap='square';ctx.lineJoin='miter';
+    const isHovered=!a.isAnimating&&testArrows[hoveredArrowIdx]===a;
+
+    // Hint glow
+    if(hinted){
+        const pulse=.3+Math.sin(Date.now()%1000/159)*.3;
+        ctx.strokeStyle='rgba(34,197,94,0.4)';ctx.lineWidth=LINE_WIDTH+Math.max(6,CELL_SIZE*.35);
+        ctx.globalAlpha=pulse;ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);
+        for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}
+        ctx.stroke();ctx.globalAlpha=1;
+    }
+
+    // Hover glow
+    if(isHovered&&!isWrongArrow&&!hinted){
+        ctx.strokeStyle='rgba(59,130,246,0.2)';ctx.lineWidth=LINE_WIDTH+Math.max(4,CELL_SIZE*.25);
+        ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x,s.y);
+        for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x,p.y)}
+        ctx.stroke();
+    }
+
+    // Shadow pass
+    if(!a.isAnimating){
+        ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=LINE_WIDTH+2;
+        ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.beginPath();const s=g2c(path[0][0],path[0][1]);ctx.moveTo(s.x+1,s.y+1);
+        for(let i=1;i<path.length;i++){const p=g2c(path[i][0],path[i][1]);ctx.lineTo(p.x+1,p.y+1)}
+        ctx.stroke();
+    }
+
+    // Main arrow color
+    let drawColor;
+    if(isWrongArrow)drawColor=a.color==='#f00'?'#ef4444':'#dc2626';
+    else if(isHeld)drawColor='#2563eb';
+    else if(isHovered)drawColor='#1d4ed8';
+    else drawColor=a.color==='#111'?'#1a1a2e':a.color;
+
+    ctx.globalAlpha=a.isAnimating?.5:1;
+    ctx.strokeStyle=drawColor;ctx.lineWidth=LINE_WIDTH;ctx.lineCap='round';ctx.lineJoin='round';
     ctx.beginPath();const sp=g2c(path[0][0],path[0][1]);ctx.moveTo(sp.x,sp.y);
     for(let i=1;i<path.length;i++){const pos=g2c(path[i][0],path[i][1]);ctx.lineTo(pos.x,pos.y)}
     ctx.stroke();
-    // Arrowhead
-    const last=path[path.length-1],prev=path[path.length-2];const dx=last[1]-prev[1],dy=last[0]-prev[0];const ep=g2c(last[0],last[1]);const ahl=Math.max(5,CELL_SIZE*.35),ahw=LINE_WIDTH*2.5;let tx=ep.x,ty=ep.y;if(dx>0)tx+=ahl;else if(dx<0)tx-=ahl;else if(dy>0)ty+=ahl;else ty-=ahl;
-    ctx.fillStyle=drawColor;ctx.beginPath();if(dx!==0){ctx.moveTo(tx,ty);ctx.lineTo(ep.x,ep.y-ahw);ctx.lineTo(ep.x,ep.y+ahw)}else{ctx.moveTo(tx,ty);ctx.lineTo(ep.x-ahw,ep.y);ctx.lineTo(ep.x+ahw,ep.y)}ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+
+    // Tail dot
+    const tail=g2c(path[0][0],path[0][1]);
+    ctx.fillStyle=drawColor;ctx.beginPath();
+    ctx.arc(tail.x,tail.y,Math.max(2,LINE_WIDTH*0.8),0,Math.PI*2);ctx.fill();
+
+    // Arrowhead (cleaner chevron)
+    const last=path[path.length-1],prev=path[path.length-2];
+    const dx=last[1]-prev[1],dy=last[0]-prev[0];
+    const ep=g2c(last[0],last[1]);
+    const ahl=Math.max(5,CELL_SIZE*.38),ahw=Math.max(3,LINE_WIDTH*2.2);
+    let tx=ep.x,ty=ep.y;
+    if(dx>0)tx+=ahl;else if(dx<0)tx-=ahl;else if(dy>0)ty+=ahl;else ty-=ahl;
+    ctx.fillStyle=drawColor;ctx.beginPath();
+    if(dx!==0){ctx.moveTo(tx,ty);ctx.lineTo(ep.x,ep.y-ahw);ctx.lineTo(ep.x+(.3*(dx>0?-1:1))*ahl,ep.y);ctx.lineTo(ep.x,ep.y+ahw)}
+    else{ctx.moveTo(tx,ty);ctx.lineTo(ep.x-ahw,ep.y);ctx.lineTo(ep.x,ep.y+(.3*(dy>0?-1:1))*ahl);ctx.lineTo(ep.x+ahw,ep.y)}
+    ctx.closePath();ctx.fill();
+    ctx.globalAlpha=1;
 }
 
 // Draw escape path: straight line from arrow head all the way to grid edge
@@ -713,19 +827,45 @@ function updatePathBtn(){
     btn.style.color=showAllPaths?'#fff':'';
 }
 
+let lastRenderTime=Date.now();
 function render(){
+    const now=Date.now();const dt=Math.min((now-lastRenderTime)/1000,0.05);lastRenderTime=now;
+
+    // Update particles
+    updateParticles(dt);
+
+    // Screen shake offset
+    let sx=0,sy=0;
+    if(shakeAmount>0.1){
+        const elapsed=(now-shakeDecay)/1000;
+        shakeAmount*=Math.max(0,1-elapsed*8);
+        sx=(Math.random()-0.5)*shakeAmount*2;
+        sy=(Math.random()-0.5)*shakeAmount*2;
+    }else shakeAmount=0;
+
     ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.setTransform(viewScale,0,0,viewScale,viewX,viewY);
+    ctx.setTransform(viewScale,0,0,viewScale,viewX+sx,viewY+sy);
+
+    // Grid dots
+    drawGridDots();
+
     // Draw all escape paths first (behind arrows) if grid mode is on
     if(showAllPaths){testArrows.forEach(a=>{if(!a.isAnimating)drawEscapePath(a,false)})}
     // Draw held arrow's path (highlighted)
     if(heldArrowId!==null){const ha=testArrows.find(a=>a.id===heldArrowId);if(ha&&!ha.isAnimating)drawEscapePath(ha,true)}
     testArrows.forEach(a=>drawArrow(a));
+
+    // Particles on top
+    drawParticles();
+
     if(gameOver)showGameOver();
-    else if(testArrows.length===0&&!activeAnimations.size)showWin();
+    else if(testArrows.length===0&&!activeAnimations.size&&!particles.length)showWin();
     ctx.setTransform(1,0,0,1,0,0);
     if(viewScale>1.05){ctx.fillStyle='rgba(0,0,0,.15)';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(Math.round(viewScale*100)+'%',8,8)}
     updateLives();updateCount();
+
+    // Keep rendering if particles or shake active
+    if((particles.length||shakeAmount>0.1)&&!animationFrameId){animationFrameId=requestAnimationFrame(animLoop)}
 }
 
 let gameOverShown=false;
@@ -782,8 +922,28 @@ function winNext(){
     else startFreePlay();
 }
 
-function updateLives(){const el=document.getElementById('livesDisplay');el.innerHTML='';for(let i=0;i<maxLives;i++){const s=document.createElement('span');s.className='heart'+(i>=lives?' lost':'');s.textContent=i<lives?'❤️':'🖤';el.appendChild(s)}}
-function updateCount(){const el=document.getElementById('arrowCount');const n=testArrows.filter(a=>!a.isAnimating).length;el.textContent=n?n+' left':''}
+let prevLives=-1;
+function updateLives(){
+    const el=document.getElementById('livesDisplay');
+    const lostOne=prevLives>0&&lives<prevLives;
+    el.innerHTML='';
+    for(let i=0;i<maxLives;i++){
+        const s=document.createElement('span');
+        s.className='heart'+(i>=lives?' lost':'');
+        if(lostOne&&i===lives)s.classList.add('pulse');
+        s.textContent=i<lives?'❤️':'🖤';
+        el.appendChild(s);
+    }
+    prevLives=lives;
+}
+let prevCount=-1;
+function updateCount(){
+    const el=document.getElementById('arrowCount');
+    const n=testArrows.filter(a=>!a.isAnimating).length;
+    if(n!==prevCount&&prevCount>0&&n>0){el.classList.remove('tick');void el.offsetWidth;el.classList.add('tick')}
+    el.textContent=n?n+' left':'';
+    prevCount=n;
+}
 
 // ================================================================
 //  HINT
@@ -798,15 +958,20 @@ function fireArrow(idx){
     hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}
     if(canMove(idx)){
         wrongArrows.delete(a.id);
+        // Spawn success particles at the head
+        const head=a.path[a.path.length-1];
+        spawnParticles(head[0],head[1],'#22c55e');
         startExitAnim(idx);
     }else{
         if(!wrongArrows.has(a.id)){
             lives--;if(lives<=0)gameOver=true;
             wrongArrows.add(a.id);
         }
+        triggerShake();
         const[dy,dx]=arrowDir(a);const h=a.path[a.path.length-1];let cr=Math.round(h[0])+dy,cc=Math.round(h[1])+dx,br=-1,bc=-1,bi=-1;
         outer:while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<testArrows.length;i++){if(i===idx||testArrows[i].isAnimating)continue;for(const pt of testArrows[i].path)if(Math.round(pt[0])===cr&&Math.round(pt[1])===cc){br=cr;bc=cc;bi=i;break outer}}cr+=dy;cc+=dx}
-        if(br!==-1){startBounce(idx,br,bc)}else render()
+        // Spawn red particles at impact point
+        if(br!==-1){spawnParticles(br,bc,'#ef4444');startBounce(idx,br,bc)}else{spawnParticles(h[0],h[1],'#ef4444');render()}
     }
 }
 
@@ -841,7 +1006,7 @@ function getDailyDone(){return loadData().daily||{}}
 //  GAME SETUP HELPERS
 // ================================================================
 function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArrows.clear();heldArrowId=null;showAllPaths=false;cancelHold();
-    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false}
+    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0}
 
 const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
 
