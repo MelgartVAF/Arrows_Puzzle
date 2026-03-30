@@ -317,7 +317,19 @@ function clampPan(){
     viewX=Math.min(padX,Math.max(w-w*viewScale-padX,viewX));
     viewY=Math.min(padY,Math.max(h-h*viewScale-padY,viewY));
 }
-function screenToCanvas(cx,cy){const r=canvas.getBoundingClientRect();const rx=canvas.width/r.width,ry=canvas.height/r.height;return{x:((cx-r.left)*rx-viewX)/viewScale,y:((cy-r.top)*ry-viewY)/viewScale}}
+function screenToCanvas(cx,cy){
+    const r=canvas.getBoundingClientRect();
+    const rx=canvas.width/r.width,ry=canvas.height/r.height;
+    // Undo pan+zoom
+    let x=((cx-r.left)*rx-viewX)/viewScale;
+    let y=((cy-r.top)*ry-viewY)/viewScale;
+    // Undo rotation around grid center
+    const gcx=gridOffsetX()+GRID_SIZE*CELL_SIZE/2;
+    const gcy=gridOffsetY()+GRID_SIZE*CELL_SIZE/2;
+    const cos=Math.cos(-puzzleRotation),sin=Math.sin(-puzzleRotation);
+    const dx=x-gcx,dy=y-gcy;
+    return{x:gcx+dx*cos-dy*sin,y:gcy+dx*sin+dy*cos};
+}
 
 // Wheel zoom
 canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt((e.clientX-r.left)*(canvas.width/r.width),(e.clientY-r.top)*(canvas.height/r.height),e.deltaY<0?1.15:1/1.15)},{passive:false});
@@ -473,6 +485,8 @@ let lives=3,maxLives=3,gameOver=false;
 let timeLimit=0,timeRemaining=0,timerInterval=null,gameStartTime=null,timerEnabled=false;
 let shapeMode='none',shapeGrid=null;
 let hintedArrowId=null,hintTimeout=null;
+let puzzleRotation=0; // current rotation angle in radians
+const ROTATION_SPEED=0.15; // radians per second (~8.6 degrees/sec, full turn ~42s)
 const wrongArrows=new Set(); // arrow IDs that player tried and were blocked
 let heldArrowId=null;    // arrow being long-pressed (show its path)
 let showAllPaths=false;  // grid toggle: show all escape paths
@@ -730,7 +744,6 @@ function startBounce(idx,br,bc){
 }
 
 function animLoop(){
-    if(!activeAnimations.size&&!bounceAnimations.size){animationFrameId=null;return}
     const now=Date.now();const done=[],bdone=[];
     for(const[id,s]of activeAnimations){
         const p=Math.min((now-s.start)/s.dur,1);
@@ -804,8 +817,9 @@ function animLoop(){
     if(done.length){for(let i=0;i<testArrows.length;i++){const a=testArrows[i];if(wrongArrows.has(a.id)&&!a.isAnimating&&canMove(i)){wrongArrows.delete(a.id);a.color='#111'}}}
     for(const id of bdone){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1){const s=bounceAnimations.get(id);testArrows[ci].path=s.origPath.map(p=>[...p]);testArrows[ci].isAnimating=false;testArrows[ci].color=wrongArrows.has(id)?'#dc2626':'#111'}bounceAnimations.delete(id)}
     if(bdone.length)render();
-    if(testArrows.length===0&&!activeAnimations.size){animationFrameId=null;render();return}
-    if(activeAnimations.size||bounceAnimations.size)animationFrameId=requestAnimationFrame(animLoop);else animationFrameId=null;
+    if(testArrows.length===0&&!activeAnimations.size&&gameOver){animationFrameId=null;render();return}
+    // Always keep loop running for rotation
+    animationFrameId=requestAnimationFrame(animLoop);
 }
 
 // ================================================================
@@ -973,6 +987,9 @@ let lastRenderTime=Date.now();
 function render(){
     const now=Date.now();const dt=Math.min((now-lastRenderTime)/1000,0.05);lastRenderTime=now;
 
+    // Advance rotation
+    if(!gameOver)puzzleRotation+=ROTATION_SPEED*dt;
+
     // Update particles
     updateParticles(dt);
 
@@ -986,7 +1003,15 @@ function render(){
     }else shakeAmount=0;
 
     ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Puzzle rotation
+    const gcx=gridOffsetX()+GRID_SIZE*CELL_SIZE/2;
+    const gcy=gridOffsetY()+GRID_SIZE*CELL_SIZE/2;
+    const rot=puzzleRotation;
     ctx.setTransform(viewScale,0,0,viewScale,viewX+sx,viewY+sy);
+    ctx.translate(gcx,gcy);
+    ctx.rotate(rot);
+    ctx.translate(-gcx,-gcy);
 
     // Grid dots
     drawGridDots();
@@ -1006,8 +1031,8 @@ function render(){
     if(viewScale>1.05){ctx.fillStyle='rgba(0,0,0,.15)';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(Math.round(viewScale*100)+'%',8,8)}
     updateLives();updateCount();
 
-    // Keep rendering if particles or shake active
-    if((particles.length||shakeAmount>0.1)&&!animationFrameId){animationFrameId=requestAnimationFrame(animLoop)}
+    // Keep rendering continuously for rotation (and particles/shake)
+    if(!animationFrameId&&!gameOver){animationFrameId=requestAnimationFrame(animLoop)}
 }
 
 let gameOverShown=false;
@@ -1130,7 +1155,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 // ================================================================
 //  TIMER
 // ================================================================
-function startTimer(){gameStartTime=Date.now();if(!timerEnabled)return;if(timerInterval)clearInterval(timerInterval);timeRemaining=timeLimit;timerInterval=setInterval(()=>{if(!gameOver){timeRemaining--;if(timeRemaining<=0){timeRemaining=0;gameOver=true;clearInterval(timerInterval)}render()}},1000)}
+function startTimer(){gameStartTime=Date.now();
+    // Start continuous render loop for rotation
+    if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
+    if(!timerEnabled)return;if(timerInterval)clearInterval(timerInterval);timeRemaining=timeLimit;timerInterval=setInterval(()=>{if(!gameOver){timeRemaining--;if(timeRemaining<=0){timeRemaining=0;gameOver=true;clearInterval(timerInterval)}render()}},1000)}
 function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
 
 // ================================================================
@@ -1148,7 +1176,7 @@ function getDailyDone(){return loadData().daily||{}}
 //  GAME SETUP HELPERS
 // ================================================================
 function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArrows.clear();heldArrowId=null;showAllPaths=false;cancelHold();
-    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0;lastTapTime=0}
+    document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0;lastTapTime=0;puzzleRotation=0}
 
 const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
 
@@ -1160,19 +1188,19 @@ function getDailyConfig(dateStr){
     const tierRoll=p();
     let targetArrows,gridSize,tier;
     if(tierRoll<0.30){
-        // HARD: 60-90 arrows
-        targetArrows=60+Math.floor(p()*30);
-        gridSize=20+Math.floor(p()*3)*2; // 20-24
+        // HARD: 25-40 arrows
+        targetArrows=25+Math.floor(p()*15);
+        gridSize=14+Math.floor(p()*3)*2; // 14-18
         tier=0;
     }else if(tierRoll<0.60){
-        // SUPER HARD: 110-160 arrows
-        targetArrows=110+Math.floor(p()*50);
-        gridSize=26+Math.floor(p()*4)*2; // 26-32
+        // SUPER HARD: 40-60 arrows
+        targetArrows=40+Math.floor(p()*20);
+        gridSize=18+Math.floor(p()*3)*2; // 18-22
         tier=1;
     }else{
-        // NIGHTMARE: 200-280 arrows, dense rectangle
-        targetArrows=200+Math.floor(p()*80);
-        gridSize=38+Math.floor(p()*4)*2; // 38-44
+        // NIGHTMARE: 60-90 arrows
+        targetArrows=60+Math.floor(p()*30);
+        gridSize=22+Math.floor(p()*4)*2; // 22-28
         tier=2;
     }
     const shape='none';
@@ -1212,6 +1240,7 @@ function startDaily(dateStr){
     const dc=getDailyConfig(dateStr);
     GRID_SIZE=dc.gridSize;MIN_ARROWS=dc.minArrows;MAX_ARROWS=dc.maxArrows;MIN_ARROW_LENGTH=dc.minLength;MAX_ARROW_LENGTH=dc.maxLength;
     rng=mulberry32(dateToSeed(dateStr+'_puzzle_v5'));
+    // Birthday override: heart-shaped puzzle
     const dailyShape=isBirthday()&&dateStr===todayStr()?BIRTHDAY_SHAPE:dc.shape;
     shapeGrid=genShape(dailyShape,GRID_SIZE,rng);
     bdayTriggered=false;
@@ -1427,8 +1456,13 @@ function isBirthday(){
     const mmdd=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     return mmdd===BIRTHDAY_DATE;
 }
+function getBdayDailyOverride(){
+    // Override daily config on birthday: heart shape, medium difficulty
+    return{shape:BIRTHDAY_SHAPE};
+}
 function checkBdaySurprise(){
     if(!isBirthday()||bdayTriggered)return;
+    // Trigger at ~50% completion
     const remaining=testArrows.filter(a=>!a.isAnimating).length;
     if(totalArrows>0&&remaining<=Math.floor(totalArrows*0.5)){
         bdayTriggered=true;
@@ -1445,6 +1479,7 @@ function closeBday(){
     document.getElementById('bdayModal').classList.remove('active');
     stopConfetti();
 }
+// Confetti system
 let confettiAnim=null;
 function startConfetti(){
     const c=document.getElementById('confettiCanvas');
