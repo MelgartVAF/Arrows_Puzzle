@@ -585,37 +585,31 @@ function genDistributed(n){
     return arrows;
 }
 
-// Fast solvability using occupancy grid
+// Fast solvability using "peel" — remove ALL free arrows each round
 function solvableFast(arrows){
-    // Build temporary grid
-    const tGrid=Array(GRID_SIZE).fill(null).map(()=>new Int16Array(GRID_SIZE).fill(-1));
-    for(let i=0;i<arrows.length;i++)for(const p of arrows[i].path)tGrid[p[0]][p[1]]=i;
-
-    for(let attempt=0;attempt<5;attempt++){
-        // Copy grid
-        const g=tGrid.map(row=>new Int16Array(row));
-        const alive=new Set(arrows.map((_,i)=>i));
-        let stuck=false;
-        while(alive.size>0){
-            const mv=[];
-            for(const idx of alive){
-                const a=arrows[idx],p=a.path,l=p[p.length-1],s=p[p.length-2];
-                const dy=l[0]-s[0],dx=l[1]-s[1];
-                let cr=l[0]+dy,cc=l[1]+dx,blocked=false;
-                while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){
-                    if(g[cr][cc]!==-1&&g[cr][cc]!==idx){blocked=true;break}
-                    cr+=dy;cc+=dx;
-                }
-                if(!blocked)mv.push(idx);
+    const g=Array(GRID_SIZE).fill(null).map(()=>new Int16Array(GRID_SIZE).fill(-1));
+    for(let i=0;i<arrows.length;i++)for(const p of arrows[i].path)g[p[0]][p[1]]=i;
+    const alive=new Set(arrows.map((_,i)=>i));
+    while(alive.size>0){
+        const free=[];
+        for(const idx of alive){
+            const a=arrows[idx],p=a.path,l=p[p.length-1],s=p[p.length-2];
+            const dy=l[0]-s[0],dx=l[1]-s[1];
+            let cr=l[0]+dy,cc=l[1]+dx,blocked=false;
+            while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){
+                if(g[cr][cc]!==-1&&g[cr][cc]!==idx){blocked=true;break}
+                cr+=dy;cc+=dx;
             }
-            if(!mv.length){stuck=true;break}
-            const pick=mv[Math.floor(Math.random()*mv.length)];
-            for(const p of arrows[pick].path)if(g[p[0]][p[1]]===pick)g[p[0]][p[1]]=-1;
-            alive.delete(pick);
+            if(!blocked)free.push(idx);
         }
-        if(!stuck)return true;
+        if(!free.length)return false;
+        // Remove all free arrows at once
+        for(const idx of free){
+            for(const p of arrows[idx].path)if(g[p[0]][p[1]]===idx)g[p[0]][p[1]]=-1;
+            alive.delete(idx);
+        }
     }
-    return false;
+    return true;
 }
 
 // ================================================================
