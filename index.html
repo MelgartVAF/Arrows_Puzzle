@@ -695,8 +695,8 @@ function arrowDir(a){const p=a.path,l=p[p.length-1],s=p[p.length-2];return[l[0]-
 function canMove(idx,arrows=testArrows){const a=arrows[idx];const[dy,dx]=arrowDir(a);const h=a.path[a.path.length-1];let cr=Math.round(h[0])+dy,cc=Math.round(h[1])+dx;while(cr>=0&&cr<GRID_SIZE&&cc>=0&&cc<GRID_SIZE){for(let i=0;i<arrows.length;i++){if(i===idx||arrows[i].isAnimating)continue;for(const pt of arrows[i].path)if(Math.round(pt[0])===cr&&Math.round(pt[1])===cc)return false}cr+=dy;cc+=dx}return true}
 function arrowAt(cx,cy){
     // Generous touch targets: half a cell size minimum
-    const hitPt=Math.max(8,CELL_SIZE*.45);
-    const hitLine=Math.max(6,CELL_SIZE*.35);
+    const hitPt=Math.max(14,CELL_SIZE*.6);
+    const hitLine=Math.max(12,CELL_SIZE*.5);
     for(let i=testArrows.length-1;i>=0;i--){const a=testArrows[i];
         for(const p of a.path){const pos=g2c(p[0],p[1]);if(Math.sqrt((cx-pos.x)**2+(cy-pos.y)**2)<=hitPt)return i}
         for(let j=0;j<a.path.length-1;j++){const p1=g2c(a.path[j][0],a.path[j][1]),p2=g2c(a.path[j+1][0],a.path[j+1][1]);if(dSeg(cx,cy,p1.x,p1.y,p2.x,p2.y)<=hitLine)return i}
