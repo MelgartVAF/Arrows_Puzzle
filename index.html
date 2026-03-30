@@ -560,13 +560,22 @@ function genLayered(n){
 }
 
 function genDistributed(n){
-    const arrows=[];let fails=0;const maxFails=800;
+    const arrows=[];let fails=0;const maxFails=1000;
+    // Dense mode: when targeting many arrows, use shorter lengths to pack tightly
+    const dense=n>120;
     while(arrows.length<n&&fails<maxFails){
         const fillRatio=arrows.length/Math.max(1,n);
         let tl;
-        if(fails>80){tl=2+Math.floor(rng()*3)}
-        else if(fillRatio>.6){tl=2+Math.floor(rng()*5)}
-        else{
+        if(fails>100){tl=2+Math.floor(rng()*2)} // desperate: tiny (2-3)
+        else if(fillRatio>.7){tl=2+Math.floor(rng()*3)} // nearly full: 2-4
+        else if(dense){
+            // Dense packing: mostly short arrows
+            const roll=rng();
+            if(roll<.35){tl=2+Math.floor(rng()*2)}       // 35% tiny (2-3)
+            else if(roll<.70){tl=3+Math.floor(rng()*4)}   // 35% short (3-6)
+            else if(roll<.90){tl=5+Math.floor(rng()*5)}   // 20% medium (5-9)
+            else{tl=8+Math.floor(rng()*6)}                 // 10% longer (8-13)
+        }else{
             const roll=rng();
             if(roll<.15){tl=2+Math.floor(rng()*3)}
             else if(roll<.45){tl=5+Math.floor(rng()*6)}
@@ -1111,9 +1120,9 @@ function getDailyConfig(dateStr){
         gridSize=24+Math.floor(p()*4)*2; // 24-30
         tier=1;
     }else{
-        // NIGHTMARE: 200-280 arrows, always rectangle
+        // NIGHTMARE: 200-280 arrows, always rectangle, big grid
         targetArrows=200+Math.floor(p()*80);
-        gridSize=32+Math.floor(p()*5)*2; // 32-40
+        gridSize=44+Math.floor(p()*5)*2; // 44-52
         tier=2;
     }
     const shape='none';
@@ -1201,7 +1210,7 @@ function getLevelConfig(n){
         tier=1;
     }else{
         targetArrows=200+Math.floor(p()*80);
-        gridSize=32+Math.floor(p()*5)*2;
+        gridSize=44+Math.floor(p()*5)*2;
         tier=2;
     }
     const shape='none';
