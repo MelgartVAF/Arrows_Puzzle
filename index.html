@@ -67,7 +67,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hint-btn:hover{border-color:var(--accent)}
 .hint-btn:active{background:#f0f0f0}
 
-.canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+.canvas-wrap{position:relative;flex:1;overflow:hidden;min-height:0}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
 #gameCanvas.grabbing{cursor:grabbing}
 
@@ -262,19 +262,21 @@ let viewScale=1,viewX=0,viewY=0;
 const MIN_ZOOM=1,MAX_ZOOM=5;
 
 function resizeCanvas(){
-    // Calculate available space: viewport minus topbar (~50px), stats (~40px), controls (~50px)
-    const chrome=52; // just the top bar
-    const availW=window.innerWidth-8;
-    const availH=window.innerHeight-chrome-8; // small bottom margin
-    const displayW=Math.max(200,Math.min(availW,availH));
-    // Higher internal resolution for crisp rendering on dense grids
+    const wrap=document.querySelector('.canvas-wrap');
+    const availW=wrap.clientWidth;
+    const availH=wrap.clientHeight;
+    // Use full available rectangle
+    const displayW=Math.max(200,availW);
+    const displayH=Math.max(200,availH);
     const dpr=window.devicePixelRatio||1;
     const res=Math.min(dpr,GRID_SIZE>24?2:1.5);
     canvas.width=Math.round(displayW*res);
-    canvas.height=canvas.width;
+    canvas.height=Math.round(displayH*res);
     canvas.style.width=displayW+'px';
-    canvas.style.height=displayW+'px';
-    CELL_SIZE=canvas.width/GRID_SIZE;updateDrawSizes();
+    canvas.style.height=displayH+'px';
+    // Size cells to fit grid within the canvas, using the smaller dimension
+    CELL_SIZE=Math.min(canvas.width,canvas.height)/GRID_SIZE;
+    updateDrawSizes();
     if(testArrows&&testArrows.length>0)render();
 }
 window.addEventListener('resize',()=>{if(document.getElementById('gameScreen').classList.contains('active'))resizeCanvas()});
@@ -286,9 +288,9 @@ function zoomAt(cx,cy,f){const ns=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,viewScale*
 function clampPan(){
     const w=canvas.width,h=canvas.height;
     // Allow dragging up to 30% past each edge so users can bring edge arrows into view
-    const pad=w*0.3;
-    viewX=Math.min(pad,Math.max(w-w*viewScale-pad,viewX));
-    viewY=Math.min(pad,Math.max(h-h*viewScale-pad,viewY));
+    const padX=w*0.3,padY=h*0.3;
+    viewX=Math.min(padX,Math.max(w-w*viewScale-padX,viewX));
+    viewY=Math.min(padY,Math.max(h-h*viewScale-padY,viewY));
 }
 function screenToCanvas(cx,cy){const r=canvas.getBoundingClientRect();const rx=canvas.width/r.width,ry=canvas.height/r.height;return{x:((cx-r.left)*rx-viewX)/viewScale,y:((cy-r.top)*ry-viewY)/viewScale}}
 
@@ -754,7 +756,10 @@ function animLoop(){
 // ================================================================
 //  RENDERING
 // ================================================================
-function g2c(row,col){return{x:col*CELL_SIZE+CELL_SIZE/2,y:row*CELL_SIZE+CELL_SIZE/2}}
+// Grid offset to center the grid within the (possibly non-square) canvas
+function gridOffsetX(){return(canvas.width-GRID_SIZE*CELL_SIZE)/2}
+function gridOffsetY(){return(canvas.height-GRID_SIZE*CELL_SIZE)/2}
+function g2c(row,col){return{x:gridOffsetX()+col*CELL_SIZE+CELL_SIZE/2,y:gridOffsetY()+row*CELL_SIZE+CELL_SIZE/2}}
 
 // Hover tracking (mouse only — skip on touch devices)
 let hoveredArrowIdx=-1,isTouch=false;
