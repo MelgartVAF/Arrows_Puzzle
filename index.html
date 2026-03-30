@@ -1110,19 +1110,19 @@ function getDailyConfig(dateStr){
     const tierRoll=p();
     let targetArrows,gridSize,tier;
     if(tierRoll<0.30){
-        // HARD: 60-90 arrows
-        targetArrows=60+Math.floor(p()*30);
-        gridSize=20+Math.floor(p()*3)*2; // 20-24
+        // HARD: 80-140 arrows
+        targetArrows=80+Math.floor(p()*60);
+        gridSize=22+Math.floor(p()*3)*2; // 22-26
         tier=0;
     }else if(tierRoll<0.60){
-        // SUPER HARD: 100-150 arrows
-        targetArrows=100+Math.floor(p()*50);
-        gridSize=24+Math.floor(p()*4)*2; // 24-30
+        // SUPER HARD: 150-200 arrows
+        targetArrows=150+Math.floor(p()*50);
+        gridSize=28+Math.floor(p()*4)*2; // 28-34
         tier=1;
     }else{
-        // NIGHTMARE: 200-280 arrows, always rectangle, big grid
+        // NIGHTMARE: 200-280 arrows, dense rectangle
         targetArrows=200+Math.floor(p()*80);
-        gridSize=44+Math.floor(p()*5)*2; // 44-52
+        gridSize=38+Math.floor(p()*4)*2; // 38-44
         tier=2;
     }
     const shape='none';
@@ -1176,16 +1176,16 @@ const TOTAL_LEVELS=500;
 
 // Levels 1-10: curated intro sequence (alternating Hard & Super Hard)
 const INTRO_LEVELS=[
-    {tier:0,arrows:60,grid:20,shape:'none'},
-    {tier:0,arrows:70,grid:22,shape:'none'},
-    {tier:0,arrows:65,grid:20,shape:'none'},
-    {tier:1,arrows:100,grid:26,shape:'none'},
-    {tier:0,arrows:75,grid:22,shape:'none'},
-    {tier:1,arrows:110,grid:28,shape:'none'},
-    {tier:1,arrows:120,grid:28,shape:'none'},
-    {tier:0,arrows:80,grid:24,shape:'none'},
-    {tier:1,arrows:130,grid:30,shape:'none'},
-    {tier:1,arrows:140,grid:30,shape:'none'},
+    {tier:0,arrows:80,grid:22,shape:'none'},
+    {tier:0,arrows:90,grid:24,shape:'none'},
+    {tier:0,arrows:85,grid:22,shape:'none'},
+    {tier:1,arrows:150,grid:28,shape:'none'},
+    {tier:0,arrows:100,grid:24,shape:'none'},
+    {tier:1,arrows:160,grid:30,shape:'none'},
+    {tier:1,arrows:170,grid:30,shape:'none'},
+    {tier:0,arrows:120,grid:26,shape:'none'},
+    {tier:1,arrows:180,grid:32,shape:'none'},
+    {tier:1,arrows:200,grid:34,shape:'none'},
 ];
 
 function getLevelConfig(n){
@@ -1201,16 +1201,16 @@ function getLevelConfig(n){
     const tierRoll=p();
     let targetArrows,gridSize,tier;
     if(tierRoll<0.30){
-        targetArrows=60+Math.floor(p()*30);
-        gridSize=20+Math.floor(p()*3)*2;
+        targetArrows=80+Math.floor(p()*60);
+        gridSize=22+Math.floor(p()*3)*2;
         tier=0;
     }else if(tierRoll<0.60){
-        targetArrows=100+Math.floor(p()*50);
-        gridSize=24+Math.floor(p()*4)*2;
+        targetArrows=150+Math.floor(p()*50);
+        gridSize=28+Math.floor(p()*4)*2;
         tier=1;
     }else{
         targetArrows=200+Math.floor(p()*80);
-        gridSize=44+Math.floor(p()*5)*2;
+        gridSize=38+Math.floor(p()*4)*2;
         tier=2;
     }
     const shape='none';
