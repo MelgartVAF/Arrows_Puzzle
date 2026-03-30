@@ -67,7 +67,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .hint-btn:hover{border-color:var(--accent)}
 .hint-btn:active{background:#f0f0f0}
 
-.canvas-wrap{position:relative;flex:1;overflow:hidden;min-height:0}
+.canvas-wrap{position:relative;flex:1;overflow:hidden;min-height:0;display:flex;align-items:center;justify-content:center}
 #gameCanvas{display:block;cursor:grab;touch-action:none}
 #gameCanvas.grabbing{cursor:grabbing}
 
@@ -265,17 +265,21 @@ function resizeCanvas(){
     const wrap=document.querySelector('.canvas-wrap');
     const availW=wrap.clientWidth;
     const availH=wrap.clientHeight;
-    // Use full available rectangle
-    const displayW=Math.max(200,availW);
-    const displayH=Math.max(200,availH);
+    const isPortrait=availH>availW;
+    const displayW=Math.max(200, isPortrait ? availW : Math.min(availW, availH*1.1));
+    const displayH=Math.max(200, availH);
     const dpr=window.devicePixelRatio||1;
     const res=Math.min(dpr,GRID_SIZE>24?2:1.5);
     canvas.width=Math.round(displayW*res);
     canvas.height=Math.round(displayH*res);
     canvas.style.width=displayW+'px';
     canvas.style.height=displayH+'px';
-    // Size cells to fit grid within the canvas, using the smaller dimension
-    CELL_SIZE=Math.min(canvas.width,canvas.height)/GRID_SIZE;
+    // Portrait: fill width, pan vertically. Landscape: fill height.
+    if(isPortrait){
+        CELL_SIZE=canvas.width*0.95/GRID_SIZE;
+    }else{
+        CELL_SIZE=canvas.height*0.95/GRID_SIZE;
+    }
     updateDrawSizes();
     if(testArrows&&testArrows.length>0)render();
 }
@@ -1105,7 +1109,8 @@ function shapeSizeMultiplier(name){
     const fill={none:1,circle:.78,diamond:.5,heart:.45,star:.45,cross:.35,
         triangle:.4,ring:.55,hexagon:.75,lshape:.55,crescent:.35,blob:.45,swiss:.7};
     const f=fill[name]||1;
-    return f<1?1/Math.sqrt(f):1; // scale grid by 1/sqrt(fill) to compensate
+    // Cap at 1.25 so grids don't get absurdly large for sparse shapes
+    return f<1?Math.min(1.25,1/Math.sqrt(f)):1;
 }
 
 // ================================================================
