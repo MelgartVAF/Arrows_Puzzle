@@ -1,6 +1,7 @@
 # Images & video
 *.PNG
 *.png
+!icon.png
 *.JPG
 *.jpg
 *.JPEG
