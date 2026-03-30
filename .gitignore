@@ -1,0 +1,27 @@
+# Images & video
+*.PNG
+*.png
+*.JPG
+*.jpg
+*.JPEG
+*.jpeg
+*.MP4
+*.mp4
+*.MOV
+*.mov
+*.GIF
+*.gif
+
+# Raw/backup HTML
+pipspuzzle_raw.html
+
+# Claude skills
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
