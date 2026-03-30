@@ -265,15 +265,15 @@ function resizeCanvas(){
     const barH=document.querySelector('.game-bar').offsetHeight||60;
     const availW=window.innerWidth;
     const availH=window.innerHeight-barH;
-    // Square canvas sized to fit the available space
-    const size=Math.max(200,Math.min(availW,availH));
     const dpr=window.devicePixelRatio||1;
     const res=Math.min(dpr,GRID_SIZE>24?2:1.5);
-    canvas.width=Math.round(size*res);
-    canvas.height=Math.round(size*res);
-    canvas.style.width=size+'px';
-    canvas.style.height=size+'px';
-    CELL_SIZE=canvas.width*0.95/GRID_SIZE;
+    // Canvas fills full available area
+    canvas.width=Math.round(availW*res);
+    canvas.height=Math.round(availH*res);
+    canvas.style.width=availW+'px';
+    canvas.style.height=availH+'px';
+    // Cells sized to fit grid in the smaller dimension
+    CELL_SIZE=Math.min(canvas.width,canvas.height)*0.95/GRID_SIZE;
     updateDrawSizes();
     if(testArrows&&testArrows.length>0)render();
 }
@@ -1103,25 +1103,26 @@ const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','r
 //  DAILY CHALLENGE
 // ================================================================
 function getDailyConfig(dateStr){
-    const seed=dateToSeed(dateStr+'_v7');const p=mulberry32(seed);
+    const seed=dateToSeed(dateStr+'_v8');const p=mulberry32(seed);
     const tierRoll=p();
-    let targetArrows,gridSize;
-    if(tierRoll<0.25){
+    let targetArrows,gridSize,tier;
+    if(tierRoll<0.30){
+        // HARD: 60-90 arrows
         targetArrows=60+Math.floor(p()*30);
         gridSize=20+Math.floor(p()*3)*2; // 20-24
-    }else if(tierRoll<0.55){
-        targetArrows=100+Math.floor(p()*60);
+        tier=0;
+    }else if(tierRoll<0.60){
+        // SUPER HARD: 100-150 arrows
+        targetArrows=100+Math.floor(p()*50);
         gridSize=24+Math.floor(p()*4)*2; // 24-30
-    }else if(tierRoll<0.80){
-        targetArrows=150+Math.floor(p()*60);
-        gridSize=30+Math.floor(p()*3)*2; // 30-34
+        tier=1;
     }else{
-        targetArrows=200+Math.floor(p()*60);
-        gridSize=34+Math.floor(p()*4)*2; // 34-40
+        // NIGHTMARE: 200-280 arrows, always rectangle
+        targetArrows=200+Math.floor(p()*80);
+        gridSize=32+Math.floor(p()*5)*2; // 32-40
+        tier=2;
     }
-    const tier=tierRoll<0.25?0:tierRoll<0.55?1:tierRoll<0.80?2:3;
-    // Nightmare always uses rectangle so all grid space is usable
-    // Hard/Super Hard get fun shapes
+    // Nightmare = rectangle, others get fun shapes
     const shape=tier>=2?'none':ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
     return{gridSize,shape,tier,
         minArrows:Math.round(targetArrows*.9),
@@ -1186,21 +1187,20 @@ function getLevelConfig(n){
     // Levels 11+: random difficulty
     const seed=dateToSeed('level_'+n+'_v7');const p=mulberry32(seed);
     const tierRoll=p();
-    let targetArrows,gridSize;
-    if(tierRoll<0.25){
+    let targetArrows,gridSize,tier;
+    if(tierRoll<0.30){
         targetArrows=60+Math.floor(p()*30);
         gridSize=20+Math.floor(p()*3)*2;
-    }else if(tierRoll<0.55){
-        targetArrows=100+Math.floor(p()*60);
+        tier=0;
+    }else if(tierRoll<0.60){
+        targetArrows=100+Math.floor(p()*50);
         gridSize=24+Math.floor(p()*4)*2;
-    }else if(tierRoll<0.80){
-        targetArrows=150+Math.floor(p()*60);
-        gridSize=30+Math.floor(p()*3)*2;
+        tier=1;
     }else{
-        targetArrows=200+Math.floor(p()*60);
-        gridSize=34+Math.floor(p()*4)*2;
+        targetArrows=200+Math.floor(p()*80);
+        gridSize=32+Math.floor(p()*5)*2;
+        tier=2;
     }
-    const tier=tierRoll<0.25?0:tierRoll<0.55?1:2;
     const shape=tier>=2?'none':ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
     return{gridSize,shape,tier,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(targetArrows*.9)),maxArrows:targetArrows,minLength:2,maxLength:Math.floor(gridSize*2)};
 }
