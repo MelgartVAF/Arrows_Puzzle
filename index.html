@@ -719,7 +719,6 @@ function startBounce(idx,br,bc){
 }
 
 function animLoop(){
-    if(!activeAnimations.size&&!bounceAnimations.size){animationFrameId=null;return}
     const now=Date.now();const done=[],bdone=[];
     for(const[id,s]of activeAnimations){
         const p=Math.min((now-s.start)/s.dur,1);
