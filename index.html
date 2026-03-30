@@ -262,24 +262,18 @@ let viewScale=1,viewX=0,viewY=0;
 const MIN_ZOOM=1,MAX_ZOOM=5;
 
 function resizeCanvas(){
-    const wrap=document.querySelector('.canvas-wrap');
-    const availW=wrap.clientWidth;
-    const availH=wrap.clientHeight;
-    const isPortrait=availH>availW;
-    const displayW=Math.max(200, isPortrait ? availW : Math.min(availW, availH*1.1));
-    const displayH=Math.max(200, availH);
+    const barH=document.querySelector('.game-bar').offsetHeight||60;
+    const availW=window.innerWidth;
+    const availH=window.innerHeight-barH;
+    // Square canvas sized to fit the available space
+    const size=Math.max(200,Math.min(availW,availH));
     const dpr=window.devicePixelRatio||1;
     const res=Math.min(dpr,GRID_SIZE>24?2:1.5);
-    canvas.width=Math.round(displayW*res);
-    canvas.height=Math.round(displayH*res);
-    canvas.style.width=displayW+'px';
-    canvas.style.height=displayH+'px';
-    // Portrait: fill width, pan vertically. Landscape: fill height.
-    if(isPortrait){
-        CELL_SIZE=canvas.width*0.95/GRID_SIZE;
-    }else{
-        CELL_SIZE=canvas.height*0.95/GRID_SIZE;
-    }
+    canvas.width=Math.round(size*res);
+    canvas.height=Math.round(size*res);
+    canvas.style.width=size+'px';
+    canvas.style.height=size+'px';
+    CELL_SIZE=canvas.width*0.95/GRID_SIZE;
     updateDrawSizes();
     if(testArrows&&testArrows.length>0)render();
 }
@@ -1104,14 +1098,6 @@ function resetState(){activeAnimations.clear();bounceAnimations.clear();wrongArr
     document.querySelectorAll('.modal-bg.active').forEach(m=>m.classList.remove('active'));if(animationFrameId){cancelAnimationFrame(animationFrameId);animationFrameId=null}hintedArrowId=null;if(hintTimeout){clearTimeout(hintTimeout);hintTimeout=null}nextArrowId=0;gameOver=false;winHandled=false;gameOverShown=false;viewScale=1;viewX=0;viewY=0;stopTimer();lives=3;maxLives=3;timerEnabled=false;hoveredArrowIdx=-1;prevLives=-1;prevCount=-1;particles.length=0;shakeAmount=0;lastTapTime=0}
 
 const ALL_SHAPES=['none','circle','diamond','heart','star','cross','triangle','ring','hexagon','lshape','crescent','blob','swiss'];
-// Approximate fill ratios for shapes — used to scale grid size so arrows fit
-function shapeSizeMultiplier(name){
-    const fill={none:1,circle:.78,diamond:.5,heart:.45,star:.45,cross:.35,
-        triangle:.4,ring:.55,hexagon:.75,lshape:.55,crescent:.35,blob:.45,swiss:.7};
-    const f=fill[name]||1;
-    // Cap at 1.25 so grids don't get absurdly large for sparse shapes
-    return f<1?Math.min(1.25,1/Math.sqrt(f)):1;
-}
 
 // ================================================================
 //  DAILY CHALLENGE
@@ -1122,22 +1108,20 @@ function getDailyConfig(dateStr){
     // Wide variety: some days are quick (40 arrows), some are marathon (150+)
     // Pick a target arrow count first, then size the grid to fit
     const tierRoll=p();
-    let targetArrows,baseGrid;
+    let targetArrows,gridSize;
     if(tierRoll<0.25){
         targetArrows=60+Math.floor(p()*30);
-        baseGrid=20+Math.floor(p()*4)*2;
+        gridSize=20+Math.floor(p()*3)*2; // 20-24
     }else if(tierRoll<0.55){
         targetArrows=100+Math.floor(p()*60);
-        baseGrid=26+Math.floor(p()*4)*2;
+        gridSize=24+Math.floor(p()*4)*2; // 24-30
     }else if(tierRoll<0.80){
-        targetArrows=170+Math.floor(p()*80);
-        baseGrid=32+Math.floor(p()*5)*2;
+        targetArrows=150+Math.floor(p()*60);
+        gridSize=30+Math.floor(p()*3)*2; // 30-34
     }else{
-        targetArrows=260+Math.floor(p()*90);
-        baseGrid=38+Math.floor(p()*5)*2;
+        targetArrows=200+Math.floor(p()*60);
+        gridSize=34+Math.floor(p()*4)*2; // 34-40
     }
-    // Shapes with less area need a bigger grid to fit the same arrow count
-    const gridSize=Math.round(baseGrid*shapeSizeMultiplier(shape));
     const tier=tierRoll<0.25?0:tierRoll<0.55?1:tierRoll<0.80?2:3;
     return{gridSize,shape,tier,
         minArrows:Math.round(targetArrows*.9),
@@ -1203,21 +1187,20 @@ function getLevelConfig(n){
     const seed=dateToSeed('level_'+n+'_v7');const p=mulberry32(seed);
     const shape=ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
     const tierRoll=p();
-    let targetArrows,baseGrid;
+    let targetArrows,gridSize;
     if(tierRoll<0.25){
         targetArrows=60+Math.floor(p()*30);
-        baseGrid=20+Math.floor(p()*4)*2;
+        gridSize=20+Math.floor(p()*3)*2;
     }else if(tierRoll<0.55){
         targetArrows=100+Math.floor(p()*60);
-        baseGrid=26+Math.floor(p()*4)*2;
+        gridSize=24+Math.floor(p()*4)*2;
     }else if(tierRoll<0.80){
-        targetArrows=170+Math.floor(p()*80);
-        baseGrid=32+Math.floor(p()*5)*2;
+        targetArrows=150+Math.floor(p()*60);
+        gridSize=30+Math.floor(p()*3)*2;
     }else{
-        targetArrows=260+Math.floor(p()*90);
-        baseGrid=38+Math.floor(p()*5)*2;
+        targetArrows=200+Math.floor(p()*60);
+        gridSize=34+Math.floor(p()*4)*2;
     }
-    const gridSize=Math.round(baseGrid*shapeSizeMultiplier(shape));
     const tier=tierRoll<0.25?0:tierRoll<0.55?1:2;
     return{gridSize,shape,tier,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(targetArrows*.9)),maxArrows:targetArrows,minLength:2,maxLength:Math.floor(gridSize*2)};
 }
@@ -1238,7 +1221,7 @@ function startLevel(n){
 function startFreePlay(){
     gameMode='free';currentDailyDate=null;currentLevel=null;
     resetState();
-    GRID_SIZE=28;MIN_ARROWS=80;MAX_ARROWS=140;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=50;
+    GRID_SIZE=24;MIN_ARROWS=80;MAX_ARROWS=130;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=40;
     rng=Math.random;
     const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
     shapeGrid=genShape(shape,GRID_SIZE);
