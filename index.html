@@ -560,7 +560,7 @@ function genLayered(n){
 }
 
 function genDistributed(n){
-    const arrows=[];let fails=0;const maxFails=400;
+    const arrows=[];let fails=0;const maxFails=800;
     while(arrows.length<n&&fails<maxFails){
         const fillRatio=arrows.length/Math.max(1,n);
         let tl;
@@ -591,7 +591,7 @@ function solvableFast(arrows){
     const tGrid=Array(GRID_SIZE).fill(null).map(()=>new Int16Array(GRID_SIZE).fill(-1));
     for(let i=0;i<arrows.length;i++)for(const p of arrows[i].path)tGrid[p[0]][p[1]]=i;
 
-    for(let attempt=0;attempt<3;attempt++){
+    for(let attempt=0;attempt<5;attempt++){
         // Copy grid
         const g=tGrid.map(row=>new Int16Array(row));
         const alive=new Set(arrows.map((_,i)=>i));
@@ -1122,8 +1122,7 @@ function getDailyConfig(dateStr){
         gridSize=32+Math.floor(p()*5)*2; // 32-40
         tier=2;
     }
-    // Nightmare = rectangle, others get fun shapes
-    const shape=tier>=2?'none':ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
+    const shape='none';
     return{gridSize,shape,tier,
         minArrows:Math.round(targetArrows*.9),
         maxArrows:targetArrows,
@@ -1142,6 +1141,16 @@ function setDiffBadge(tier){
     const el=document.getElementById('diffBadge');
     const d=DIFF_LABELS[Math.min(tier,3)];
     el.textContent=d.text;el.className='diff-badge '+d.cls;
+}
+
+// Count usable cells in shape and cap arrow targets to what actually fits
+function capArrowsToShape(){
+    let cells=0;
+    for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++)if(isInShape(r,c))cells++;
+    // Each arrow uses ~4 cells on average; cap at 25% of usable cells
+    const maxFeasible=Math.floor(cells/4);
+    MAX_ARROWS=Math.min(MAX_ARROWS,maxFeasible);
+    MIN_ARROWS=Math.min(MIN_ARROWS,MAX_ARROWS);
 }
 
 function startDaily(dateStr){
@@ -1164,16 +1173,16 @@ const TOTAL_LEVELS=500;
 
 // Levels 1-10: curated intro sequence (alternating Hard & Super Hard)
 const INTRO_LEVELS=[
-    {tier:0,arrows:60,grid:20,shape:'none'},       // 1: Hard, rectangle
-    {tier:0,arrows:70,grid:22,shape:'circle'},      // 2: Hard, circle
-    {tier:0,arrows:65,grid:20,shape:'diamond'},     // 3: Hard, diamond
-    {tier:1,arrows:100,grid:26,shape:'none'},       // 4: Super Hard, rectangle
-    {tier:0,arrows:75,grid:22,shape:'heart'},       // 5: Hard, heart
-    {tier:1,arrows:110,grid:28,shape:'star'},       // 6: Super Hard, star
-    {tier:1,arrows:120,grid:28,shape:'hexagon'},    // 7: Super Hard, hexagon
-    {tier:0,arrows:80,grid:24,shape:'cross'},       // 8: Hard, cross
-    {tier:1,arrows:130,grid:30,shape:'ring'},       // 9: Super Hard, ring
-    {tier:1,arrows:140,grid:30,shape:'crescent'},   // 10: Super Hard, crescent
+    {tier:0,arrows:60,grid:20,shape:'none'},
+    {tier:0,arrows:70,grid:22,shape:'none'},
+    {tier:0,arrows:65,grid:20,shape:'none'},
+    {tier:1,arrows:100,grid:26,shape:'none'},
+    {tier:0,arrows:75,grid:22,shape:'none'},
+    {tier:1,arrows:110,grid:28,shape:'none'},
+    {tier:1,arrows:120,grid:28,shape:'none'},
+    {tier:0,arrows:80,grid:24,shape:'none'},
+    {tier:1,arrows:130,grid:30,shape:'none'},
+    {tier:1,arrows:140,grid:30,shape:'none'},
 ];
 
 function getLevelConfig(n){
@@ -1201,7 +1210,7 @@ function getLevelConfig(n){
         gridSize=32+Math.floor(p()*5)*2;
         tier=2;
     }
-    const shape=tier>=2?'none':ALL_SHAPES[Math.floor(p()*ALL_SHAPES.length)];
+    const shape='none';
     return{gridSize,shape,tier,minArrows:Math.max(HARD_MIN_ARROWS,Math.round(targetArrows*.9)),maxArrows:targetArrows,minLength:2,maxLength:Math.floor(gridSize*2)};
 }
 
@@ -1223,8 +1232,7 @@ function startFreePlay(){
     resetState();
     GRID_SIZE=24;MIN_ARROWS=80;MAX_ARROWS=130;MIN_ARROW_LENGTH=2;MAX_ARROW_LENGTH=40;
     rng=Math.random;
-    const shape=ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
-    shapeGrid=genShape(shape,GRID_SIZE);
+    shapeGrid=genShape('none',GRID_SIZE);
     document.getElementById('gameTitle').textContent='Free Play';
     setDiffBadge(1);
     showScreen('gameScreen');
