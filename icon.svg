@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#111"/>
+
+  <!-- Left arrow: starts at bottom tip, goes up-left around the heart bump, ends at top-center with arrowhead -->
+  <path d="M256,400 C180,340 60,270 60,180 C60,110 110,70 170,70 C215,70 245,95 256,128"
+        stroke="#f43f5e" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Right arrow: starts at bottom tip, goes up-right around the heart bump, ends at top-center with arrowhead -->
+  <path d="M256,400 C332,340 452,270 452,180 C452,110 402,70 342,70 C297,70 267,95 256,128"
+        stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Left arrowhead at top-center, angled coming from the left -->
+  <polygon points="250,108 224,138 254,140" fill="#f43f5e"/>
+
+  <!-- Right arrowhead at top-center, angled coming from the right -->
+  <polygon points="262,108 288,138 258,140" fill="#fff"/>
+</svg>
