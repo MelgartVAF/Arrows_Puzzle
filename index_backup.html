@@ -124,6 +124,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ---- BIRTHDAY ---- */
+.bday-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;padding:20px}
+.bday-bg.active{display:flex}
+.bday-modal{background:#fff;border-radius:24px;padding:40px 32px;max-width:380px;width:100%;text-align:center;animation:bdayPop .5s cubic-bezier(.17,.67,.29,1.3);position:relative;overflow:hidden}
+.bday-modal h1{font-size:32px;margin:12px 0 4px;font-weight:900}
+.bday-modal .bday-name{font-size:24px;color:#db2777;font-weight:800;margin-bottom:8px}
+.bday-modal .bday-emoji{font-size:64px;margin-bottom:4px}
+.bday-modal p{color:#666;font-size:15px;margin-top:8px}
+.bday-modal .bday-close{margin-top:20px;padding:12px 32px;border:none;border-radius:12px;background:#db2777;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+@keyframes bdayPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.05) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.confetti-canvas{position:fixed;inset:0;z-index:2001;pointer-events:none}
 @media(max-width:380px){.home-title{font-size:36px}.lvl-grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
@@ -239,6 +251,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
 </div>
 </div>
+
+<!-- ==================== BIRTHDAY SURPRISE ==================== -->
+<div class="bday-bg" id="bdayModal">
+<div class="bday-modal">
+    <div class="bday-emoji">🎂</div>
+    <h1>Happy Birthday!</h1>
+    <div class="bday-name" id="bdayName">Elena Anne</div>
+    <p id="bdayMsg">Wishing you the most amazing day! 🎉💕</p>
+    <button class="bday-close" onclick="closeBday()">Thank you! 🥳</button>
+</div>
+</div>
+<canvas class="confetti-canvas" id="confettiCanvas"></canvas>
 
 <script>
 // ================================================================
@@ -1059,6 +1083,7 @@ function updateCount(){
     const pct=totalArrows>0?Math.round((1-n/totalArrows)*100):0;
     document.getElementById('progressFill').style.width=pct+'%';
     prevCount=n;
+    checkBdaySurprise();
 }
 
 // ================================================================
@@ -1186,7 +1211,9 @@ function startDaily(dateStr){
     const dc=getDailyConfig(dateStr);
     GRID_SIZE=dc.gridSize;MIN_ARROWS=dc.minArrows;MAX_ARROWS=dc.maxArrows;MIN_ARROW_LENGTH=dc.minLength;MAX_ARROW_LENGTH=dc.maxLength;
     rng=mulberry32(dateToSeed(dateStr+'_puzzle_v5'));
-    shapeGrid=genShape(dc.shape,GRID_SIZE,rng);
+    const dailyShape=isBirthday()&&dateStr===todayStr()?BIRTHDAY_SHAPE:dc.shape;
+    shapeGrid=genShape(dailyShape,GRID_SIZE,rng);
+    bdayTriggered=false;
     document.getElementById('gameTitle').textContent='Daily · '+fmtDateShort(dateStr);
     setDiffBadge(dc.tier);
     showScreen('gameScreen');
@@ -1383,6 +1410,77 @@ function fmtDateShort(ds){const[y,m,d]=ds.split('-').map(Number);return['Jan','F
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ================================================================
+//  BIRTHDAY SURPRISE
+//  ── CHANGE THESE TO SET DATE, NAME, AND MESSAGE ──
+// ================================================================
+const BIRTHDAY_DATE='03-30'; // MM-DD format
+const BIRTHDAY_NAME='Elena Anne';
+const BIRTHDAY_MESSAGE='Wishing you the most amazing day! 🎉💕';
+const BIRTHDAY_SHAPE='heart'; // puzzle shape on birthday
+
+let bdayTriggered=false,bdayConfettiParts=[];
+function isBirthday(){
+    const d=new Date();
+    const mmdd=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return mmdd===BIRTHDAY_DATE;
+}
+function checkBdaySurprise(){
+    if(!isBirthday()||bdayTriggered)return;
+    const remaining=testArrows.filter(a=>!a.isAnimating).length;
+    if(totalArrows>0&&remaining<=Math.floor(totalArrows*0.5)){
+        bdayTriggered=true;
+        showBday();
+    }
+}
+function showBday(){
+    document.getElementById('bdayName').textContent=BIRTHDAY_NAME;
+    document.getElementById('bdayMsg').textContent=BIRTHDAY_MESSAGE;
+    document.getElementById('bdayModal').classList.add('active');
+    startConfetti();
+}
+function closeBday(){
+    document.getElementById('bdayModal').classList.remove('active');
+    stopConfetti();
+}
+let confettiAnim=null;
+function startConfetti(){
+    const c=document.getElementById('confettiCanvas');
+    c.width=window.innerWidth;c.height=window.innerHeight;
+    c.style.display='block';
+    const ctx2=c.getContext('2d');
+    bdayConfettiParts=[];
+    const emojis=['❤️','💕','💖','💗','💘','💝','💍','💎','💍','❤️','💕','💖'];
+    for(let i=0;i<120;i++){
+        bdayConfettiParts.push({
+            x:Math.random()*c.width,y:Math.random()*c.height-c.height,
+            vx:(Math.random()-0.5)*3,vy:1.5+Math.random()*3,
+            size:16+Math.random()*20,
+            emoji:emojis[Math.floor(Math.random()*emojis.length)],
+            rot:(Math.random()-0.5)*0.4,rotV:(Math.random()-0.5)*0.03
+        });
+    }
+    function confLoop(){
+        ctx2.clearRect(0,0,c.width,c.height);
+        for(const p of bdayConfettiParts){
+            p.x+=p.vx;p.y+=p.vy;p.rot+=p.rotV;
+            p.vy+=0.03;
+            if(p.y>c.height+30){p.y=-30;p.x=Math.random()*c.width;p.vy=1.5+Math.random()*3}
+            ctx2.save();ctx2.translate(p.x,p.y);ctx2.rotate(p.rot);
+            ctx2.font=p.size+'px serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
+            ctx2.fillText(p.emoji,0,0);
+            ctx2.restore();
+        }
+        confettiAnim=requestAnimationFrame(confLoop);
+    }
+    confLoop();
+}
+function stopConfetti(){
+    if(confettiAnim){cancelAnimationFrame(confettiAnim);confettiAnim=null}
+    const c=document.getElementById('confettiCanvas');
+    c.style.display='none';
+}
 
 // ================================================================
 //  INIT
