@@ -793,8 +793,9 @@ function animLoop(){
     if(done.length){for(let i=0;i<testArrows.length;i++){const a=testArrows[i];if(wrongArrows.has(a.id)&&!a.isAnimating&&canMove(i)){wrongArrows.delete(a.id);a.color='#111'}}}
     for(const id of bdone){const ci=testArrows.findIndex(a=>a.id===id);if(ci!==-1){const s=bounceAnimations.get(id);testArrows[ci].path=s.origPath.map(p=>[...p]);testArrows[ci].isAnimating=false;testArrows[ci].color=wrongArrows.has(id)?'#dc2626':'#111'}bounceAnimations.delete(id)}
     if(bdone.length)render();
-    if(testArrows.length===0&&!activeAnimations.size){animationFrameId=null;render();return}
-    if(activeAnimations.size||bounceAnimations.size)animationFrameId=requestAnimationFrame(animLoop);else animationFrameId=null;
+    if(testArrows.length===0&&!activeAnimations.size&&gameOver){animationFrameId=null;render();return}
+    // Always keep loop running for rotation
+    animationFrameId=requestAnimationFrame(animLoop);
 }
 
 // ================================================================
@@ -1129,7 +1130,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 // ================================================================
 //  TIMER
 // ================================================================
-function startTimer(){gameStartTime=Date.now();if(!timerEnabled)return;if(timerInterval)clearInterval(timerInterval);timeRemaining=timeLimit;timerInterval=setInterval(()=>{if(!gameOver){timeRemaining--;if(timeRemaining<=0){timeRemaining=0;gameOver=true;clearInterval(timerInterval)}render()}},1000)}
+function startTimer(){gameStartTime=Date.now();
+    // Start continuous render loop for rotation
+    if(!animationFrameId)animationFrameId=requestAnimationFrame(animLoop);
+    if(!timerEnabled)return;if(timerInterval)clearInterval(timerInterval);timeRemaining=timeLimit;timerInterval=setInterval(()=>{if(!gameOver){timeRemaining--;if(timeRemaining<=0){timeRemaining=0;gameOver=true;clearInterval(timerInterval)}render()}},1000)}
 function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
 
 // ================================================================
